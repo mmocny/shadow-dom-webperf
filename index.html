@@ -568,11 +568,11 @@
 
           <div class="card">
             <span class="status-badge status-warn" style="align-self:flex-start;">Event Timing &amp; LoAF</span>
-            <h3>Inconsistent Edge Cases</h3>
+            <h3>Mostly Retargeted, With Edge Cases</h3>
             <p>
-              Composed events retarget <code>target</code> to the host, but <strong>shadow-confined events</strong> and <strong>no-listener events</strong> (<a href="https://crbug.com/1367329" target="_blank">crbug/1367329</a>) become <code>target: null</code> in Chrome (while Safari still retargets no-listener events to the host), and <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) / LoAF <code>invoker</code> leak inner shadow IDs.
+              Event Timing retargets <code>entry.target</code> to the Shadow Host by spec (though Chrome doesn't do this 100% correctly in all cases yet, <a href="https://crbug.com/1367329" target="_blank">crbug/1367329</a>), while <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) and LoAF <code>invoker</code> can still expose inner shadow selectors/IDs.
             </p>
-            <div class="formula-pill">Host retargeted · null on confined/no-listener · leaked IDs</div>
+            <div class="formula-pill">Host retargeted · Chrome edge-case bug · selector/ID questions</div>
           </div>
 
           <div class="card">
