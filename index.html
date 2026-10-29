@@ -43,21 +43,20 @@
           <option value="10">11. What Breaks Today in WebPerf?</option>
           <option value="11">12. Two Audiences for Web Components</option>
           <option value="12">13. Current WebPerf Spec Scorecard</option>
-          <option value="13">14. Concept: Event Timing vs. CLS</option>
-          <option value="14">15. ▶ Live Demo: Event Timing &amp; CLS</option>
-          <option value="15">16. Concept: The LCP #152 Bug</option>
-          <option value="16">17. ▶ Live Demo: The LCP #152 Bug</option>
+          <option value="13">14. Event Timing vs. CLS Attribution</option>
+          <option value="14">15. Concept: The LCP #152 Bug</option>
+          <option value="15">16. ▶ Live Demo: The LCP #152 Bug</option>
         </optgroup>
         <optgroup label="5. WG Decisions">
-          <option value="17">18. Default: Component User View</option>
-          <option value="18">19. Opt-In: Component Author View</option>
-          <option value="19">20. 4 Decisions for WebPerf WG</option>
-          <option value="20">21. Appendix: Engine &amp; WPT Plan</option>
+          <option value="16">17. Default: Component User View</option>
+          <option value="17">18. Opt-In: Component Author View</option>
+          <option value="18">19. 4 Decisions for WebPerf WG</option>
+          <option value="19">20. Appendix: Engine &amp; WPT Plan</option>
         </optgroup>
       </select>
 
       <button id="prev-slide-btn" class="nav-btn" type="button">←</button>
-      <span id="slide-counter-label" class="slide-counter">1 / 21</span>
+      <span id="slide-counter-label" class="slide-counter">1 / 20</span>
       <button id="next-slide-btn" class="nav-btn primary" type="button">Next →</button>
       <button id="toggle-mode-btn" class="nav-btn" type="button">All Slides</button>
     </div>
@@ -709,27 +708,6 @@
               <li>Yet <code>sources[0].node</code> returns <code>null</code> because <code>layout_shift_attribution.cc</code> checks <code>IsInShadowTree()</code> instead of <code>Retarget()</code>.</li>
             </ul>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SLIDE 17: Inline Live WebPerf Demo (Event Timing & CLS) -->
-    <section class="slide" data-slide-index="16" data-part="3">
-      <div class="slide-body">
-        <div class="demo-slide-header">
-          <div>
-            <div class="slide-eyebrow">Part 4 · Interactive WebPerf Demo · PerformanceObserver</div>
-            <h2>Live Demo: Event Timing (<code>INP</code>) &amp; <code>LayoutShift</code> (<code>CLS</code>)</h2>
-          </div>
-          <div class="demo-slide-actions">
-            <button class="tab-btn active" type="button" onclick="switchWebPerfDemo('demos/demo-1-events.html?mode=webperf', this)">1. Event Timing (INP)</button>
-            <button class="tab-btn" type="button" onclick="switchWebPerfDemo('demos/demo-2-geometry-cls.html?mode=webperf', this)">2. LayoutShift (CLS)</button>
-            <button class="nav-btn" type="button" onclick="reloadDemoFrame(this)">↻ Reload</button>
-            <a class="nav-btn" id="webperf-open-link" href="demos/demo-1-events.html?mode=webperf" target="_blank">Open in New Tab ↗</a>
-          </div>
-        </div>
-        <div class="demo-embed-wrap">
-          <iframe class="demo-embed-frame" id="webperf-combo-frame" data-src="demos/demo-1-events.html?mode=webperf" title="WebPerf Demo: Event Timing and CLS"></iframe>
         </div>
       </div>
     </section>
