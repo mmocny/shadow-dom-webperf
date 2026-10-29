@@ -899,46 +899,50 @@
       </div>
     </section>
 
-    <!-- SLIDE 16: 4 Proposed Resolutions for WebPerf WG -->
-    <section class="slide" data-slide-index="15" data-part="4">
+    <!-- SLIDE 19: 4 Proposed Resolutions for WebPerf WG -->
+    <section class="slide" data-slide-index="18" data-part="4">
       <div class="slide-body">
         <h2>4 Decisions for the Working Group</h2>
 
         <div class="grid-4">
           <div class="card">
-            <span class="card-num">1</span>
-            <h3>Include Author Shadow DOM; Exclude UA</h3>
+            <div class="card-head">
+              <span class="card-num">1</span>
+              <h3>Measure Author Shadow DOM (Not <code>UA</code>)</h3>
+            </div>
             <p>
-              Update Paint Timing &amp; LCP to traverse shadow-including descendants for <code>open</code> and <code>closed</code> roots, while excluding <strong>User-Agent</strong> shadow trees.
+              Include <code>open</code> and <code>closed</code> shadow trees in Paint Timing &amp; LCP (unblocking Safari <a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank">#152</a>), while excluding <strong>User-Agent</strong> shadow roots.
             </p>
-            <div class="formula-pill">Unblocks Safari/WebKit interop (#152)</div>
           </div>
 
           <div class="card">
-            <span class="card-num">2</span>
-            <h3>Retarget <code>element</code>, <code>id</code> &amp; <code>node</code> to Host; Keep <code>url</code></h3>
+            <div class="card-head">
+              <span class="card-num">2</span>
+              <h3>Retarget Attribution to the Host</h3>
+            </div>
             <p>
-              Retarget <code>LCP.element</code> (and <code>LCP.id</code> → Host's <code>id</code>), <code>CLS.sources[i].node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host, while keeping <code>LCP.url</code> reported.
+              Retarget <code>LCP.element</code>, <code>LCP.id</code>, <code>CLS.node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host—while keeping <code>&lt;slot&gt;</code> nodes and <code>LCP.url</code>.
             </p>
-            <div class="formula-pill">Host element + Host id + slots + url</div>
           </div>
 
           <div class="card">
-            <span class="card-num">3</span>
-            <h3>Cap Inline Text &amp; Decide <code>targetSelector</code> (#126)</h3>
+            <div class="card-head">
+              <span class="card-num">3</span>
+              <h3>Cap Inline Text &amp; Decide <code>targetSelector</code></h3>
+            </div>
             <p>
-              Cap inline text aggregation at Shadow Host boundaries. Decide whether Event Timing's <code>targetSelector</code> pierces <code>open</code> roots (like <code>composedPath()</code>) or stops at the host.
+              Stop Paint Timing inline text aggregation at Shadow Host boundaries, and resolve whether Event Timing's <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) stops at the Host or pierces <code>open</code> roots.
             </p>
-            <div class="formula-pill">Inline text cap · targetSelector (#126)</div>
           </div>
 
           <div class="card">
-            <span class="card-num">4</span>
-            <h3>Component Author Opt-In: <code>{ shadowRoots, root }</code></h3>
+            <div class="card-head">
+              <span class="card-num">4</span>
+              <h3>Component Author Opt-In on <code>observe()</code></h3>
+            </div>
             <p>
-              Incubate <code>shadowRoots</code> &amp; <code>root</code> on <code>PerformanceObserverInit</code> to unlock inner node/id attribution AND shadow-filtered entries (<code>element</code>, <code>container</code>, confined <code>event</code>s).
+              Allow passing <code>{ shadowRoots, root }</code> to unlock <strong>inner node attribution</strong> and <strong>shadow-filtered entries</strong> (<code>element</code>, <code>container</code>, confined <code>event</code>s).
             </p>
-            <div class="formula-pill">Unlocks inner nodes + filtered entries</div>
           </div>
         </div>
       </div>
