@@ -1095,10 +1095,10 @@
       }
     });
 
-    document.querySelector('.deck-main').addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
       if (document.body.classList.contains('mode-document')) return;
       if (window.getSelection()?.toString().length > 0) return;
-      if (e.target.closest('a, button, select, input, textarea, label, .demo-embed-wrap, .demo-slide-actions, .tab-bar')) return;
+      if (e.target.closest('.deck-header, a, button, select, input, textarea, label, .demo-embed-wrap, .demo-slide-actions, .tab-bar')) return;
       if (currentSlide < slides.length - 1) {
         updateSlideView(currentSlide + 1);
       }
