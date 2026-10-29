@@ -116,29 +116,29 @@
         <div class="grid-3">
           <div class="card">
             <span class="card-num">1</span>
-            <h3>Light DOM Queries Stop</h3>
+            <h3>Hosts Live in Light DOM</h3>
             <p>
-              <code>document.querySelectorAll()</code> stops at the Shadow Boundary.
+              Every custom element <strong>Host</strong> is in the outer <code>document</code> (regardless of <code>open</code> or <code>closed</code> mode).
+            </p>
+            <div class="formula-pill">document.querySelectorAll('...-card')</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Queries Stop at Boundary</h3>
+            <p>
+              <code>document.querySelectorAll()</code> does not reach inside Shadow Roots by default.
             </p>
             <div class="formula-pill">document.querySelectorAll('button')</div>
           </div>
 
           <div class="card">
-            <span class="card-num">2</span>
-            <h3><code>open</code> Shadow Root</h3>
-            <p>
-              Hidden by default, but reachable via <code>host.shadowRoot</code>.
-            </p>
-            <div class="formula-pill">host.shadowRoot.querySelectorAll(...)</div>
-          </div>
-
-          <div class="card">
             <span class="card-num">3</span>
-            <h3><code>closed</code> Shadow Root</h3>
+            <h3>Reaching In: <code>open</code> Only</h3>
             <p>
-              <code>host.shadowRoot</code> is <code>null</code>—only the outer <strong>Host</strong> element is in Light DOM.
+              <code>host.shadowRoot</code> reaches inside <code>open</code> roots, while returning <code>null</code> for <code>closed</code>.
             </p>
-            <div class="formula-pill">host.shadowRoot → null</div>
+            <div class="formula-pill">host.shadowRoot?.querySelectorAll(...)</div>
           </div>
         </div>
       </div>

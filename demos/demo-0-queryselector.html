@@ -137,17 +137,17 @@
     </div>
 
     <div class="actions">
+      <div class="q-pill" data-action="doc-hosts">
+        <span>1. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')</span>
+        <span class="q-desc">Selects all 3 host elements</span>
+      </div>
       <div class="q-pill" data-action="doc-buttons">
-        <span>1. document.querySelectorAll('button')</span>
+        <span>2. document.querySelectorAll('button')</span>
         <span class="q-desc">Only finds Light DOM buttons</span>
       </div>
       <div class="q-pill" data-action="shadow-buttons">
-        <span>2. host.shadowRoot?.querySelectorAll('button')</span>
+        <span>3. host.shadowRoot?.querySelectorAll('button')</span>
         <span class="q-desc">Reaches into open shadowRoot only</span>
-      </div>
-      <div class="q-pill" data-action="doc-hosts">
-        <span>3. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')</span>
-        <span class="q-desc">Selects all 3 host elements</span>
       </div>
     </div>
 
@@ -282,13 +282,20 @@
 
       clearHighlights();
 
-      if (action === 'doc-buttons') {
+      if (action === 'doc-hosts') {
+        const matches = document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card');
+        matches.forEach(el => el.classList.add('matched-host'));
+        k1.textContent = "document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card'):";
+        v1.textContent = formatNodeList(matches);
+        row2.style.display = 'none';
+        console.log("[1. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')]", Array.from(matches));
+      } else if (action === 'doc-buttons') {
         const matches = document.querySelectorAll('button');
         matches.forEach(el => el.classList.add('matched'));
         k1.textContent = "document.querySelectorAll('button'):";
         v1.textContent = formatNodeList(matches);
         row2.style.display = 'none';
-        console.log("[1. document.querySelectorAll('button')]", Array.from(matches));
+        console.log("[2. document.querySelectorAll('button')]", Array.from(matches));
       } else if (action === 'shadow-buttons') {
         const openMatches = openHost.shadowRoot?.querySelectorAll('button');
         const closedMatches = closedHost.shadowRoot?.querySelectorAll('button');
@@ -299,17 +306,10 @@
         row2.style.display = 'block';
         k2.textContent = "closedHost.shadowRoot?.querySelectorAll('button'):";
         v2.textContent = formatNodeList(closedMatches);
-        console.log("[2. host.shadowRoot?.querySelectorAll('button')]", {
+        console.log("[3. host.shadowRoot?.querySelectorAll('button')]", {
           openHost: openMatches ? Array.from(openMatches) : undefined,
           closedHost: closedMatches,
         });
-      } else if (action === 'doc-hosts') {
-        const matches = document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card');
-        matches.forEach(el => el.classList.add('matched-host'));
-        k1.textContent = "document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card'):";
-        v1.textContent = formatNodeList(matches);
-        row2.style.display = 'none';
-        console.log("[3. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')]", Array.from(matches));
       }
     }
 
