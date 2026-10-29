@@ -659,7 +659,7 @@
                 <td><strong>Paint Timing &amp; LCP</strong></td>
                 <td><span class="status-badge status-fail">Chrome/FF Yes · Safari No</span></td>
                 <td><span class="status-badge status-fail"><code>element: null</code> ❌</span></td>
-                <td>Include shadow trees in spec; retarget <code>element</code> to Host; keep <code>url</code> (like Resource Timing); decide <code>id</code> behavior; cap inline text.</td>
+                <td>Include shadow trees in spec; retarget <code>element</code> &amp; <code>id</code> to Host; keep <code>url</code> (like Resource Timing); cap inline text.</td>
               </tr>
               <tr>
                 <td><strong>Long Animation Frames</strong></td>
@@ -800,8 +800,8 @@
           </div>
           <div class="card">
             <span class="card-num">2</span>
-            <h3>What About <code>entry.id</code>?</h3>
-            <p>Keep <code>LCP.url</code>, but avoid leaking internal shadow <code>id</code> / <code>elementtiming</code> attributes—either report the retargeted Host's <code>id</code> or leave empty by default.</p>
+            <h3>Retarget <code>entry.id</code> to Host</h3>
+            <p>When <code>LCP.element</code> is retargeted to the Shadow Host, <code>LCP.id</code> reports the retargeted <strong>Host's <code>id</code></strong> (never leaking internal shadow <code>id</code> or <code>elementtiming</code> attributes).</p>
           </div>
           <div class="card">
             <span class="card-num">3</span>
@@ -865,20 +865,20 @@
 
           <div class="card">
             <span class="card-num">2</span>
-            <h3>Retarget <code>element</code>/<code>node</code> to Host; Keep <code>url</code></h3>
+            <h3>Retarget <code>element</code>, <code>id</code> &amp; <code>node</code> to Host; Keep <code>url</code></h3>
             <p>
-              Retarget <code>LCP.element</code>, <code>CLS.sources[i].node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host (preserving <code>&lt;slot&gt;</code> children and keeping <code>LCP.url</code> reported).
+              Retarget <code>LCP.element</code> (and <code>LCP.id</code> → Host's <code>id</code>), <code>CLS.sources[i].node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host, while keeping <code>LCP.url</code> reported.
             </p>
-            <div class="formula-pill">Component in its entirety + slots + url</div>
+            <div class="formula-pill">Host element + Host id + slots + url</div>
           </div>
 
           <div class="card">
             <span class="card-num">3</span>
-            <h3>Decide Metadata: <code>LCP.id</code> &amp; <code>targetSelector</code> (#126)</h3>
+            <h3>Cap Inline Text &amp; Decide <code>targetSelector</code> (#126)</h3>
             <p>
-              Cap inline text at Shadow Host boundaries. Decide whether <code>LCP.id</code> reports the Host's <code>id</code> (hiding inner <code>id</code>/<code>elementtiming</code> details) and whether <code>targetSelector</code> pierces <code>open</code> roots.
+              Cap inline text aggregation at Shadow Host boundaries. Decide whether Event Timing's <code>targetSelector</code> pierces <code>open</code> roots (like <code>composedPath()</code>) or stops at the host.
             </p>
-            <div class="formula-pill">Host id vs. inner id · targetSelector (#126)</div>
+            <div class="formula-pill">Inline text cap · targetSelector (#126)</div>
           </div>
 
           <div class="card">
