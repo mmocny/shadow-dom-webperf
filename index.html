@@ -40,17 +40,19 @@
           <option value="9">10. Summary: What Shadow DOM Encapsulates—And Why</option>
           <option value="10">11. Summary: open vs. closed vs. UA</option>
         </optgroup>
-        <optgroup label="4. WebPerf Gaps &amp; Demos">
+        <optgroup label="4. WebPerf Gaps">
           <option value="11">12. What Breaks Today in WebPerf?</option>
           <option value="12">13. Two Audiences for Web Components</option>
           <option value="13">14. Current WebPerf Spec Scorecard</option>
-          <option value="14">15. Event Timing vs. CLS Attribution</option>
-          <option value="15">16. The LCP #152 Bug</option>
         </optgroup>
         <optgroup label="5. WG Decisions">
-          <option value="16">17. Default: Component User View</option>
-          <option value="17">18. Opt-In: Component Author View</option>
-          <option value="18">19. 4 Decisions for WebPerf WG</option>
+          <option value="14">15. Default: Component User View</option>
+          <option value="15">16. Opt-In: Component Author View</option>
+          <option value="16">17. 4 Decisions for WebPerf WG</option>
+        </optgroup>
+        <optgroup label="6. Appendix">
+          <option value="17">18. Appendix: Event Timing vs. CLS</option>
+          <option value="18">19. Appendix: The LCP #152 Bug</option>
           <option value="19">20. Appendix: Engine &amp; WPT Plan</option>
         </optgroup>
       </select>
@@ -754,83 +756,12 @@
       </div>
     </section>
 
-    <!-- SLIDE 16: WebPerf Demo Concept (Event Timing vs CLS on the Same Components) -->
-    <section class="slide" data-slide-index="15" data-part="3">
-      <div class="slide-body">
-        <h2>Event Timing Retargets to Host—While CLS Drops <code>node</code> to <code>null</code></h2>
-        <p class="slide-lead">
-          Running <code>PerformanceObserver</code> on the exact same components from Demos 1 &amp; 2 shows the inconsistency:
-        </p>
-
-        <div class="grid-2">
-          <div class="card">
-            <span class="status-badge status-pass" style="align-self:flex-start;">PerformanceEventTiming (INP)</span>
-            <h3>Retargets <code>entry.target</code> to Host ✅</h3>
-            <ul>
-              <li>Clicking <code>open</code> or <code>closed</code> shadow buttons sets <code>entry.target</code> to <code>&lt;open-demo-card&gt;</code> / <code>&lt;closed-demo-card&gt;</code>.</li>
-              <li>Internal <code>mouseover</code> between two shadow elements stops at the <code>ShadowRoot</code> and reports <code>entry.target = null</code>.</li>
-              <li><strong>Open WG Question (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>):</strong> <code>targetSelector</code> is modeled on <code>event.composedPath()</code>—should it pierce <code>open</code> roots by default or stop at the host?</li>
-            </ul>
-          </div>
-
-          <div class="card">
-            <span class="status-badge status-warn" style="align-self:flex-start;">LayoutShift (CLS)</span>
-            <h3>Exposes Rects, Drops <code>node: null</code> ⚠️</h3>
-            <ul>
-              <li><code>LayoutShift</code> already reports the exact <code>previousRect</code> and <code>currentRect</code> of the shifting shadow element!</li>
-              <li>Calling <code>document.elementFromPoint(currentRect.x, currentRect.y)</code> synchronously already returns <code>&lt;my-closed-hero&gt;</code>.</li>
-              <li>Yet <code>sources[0].node</code> returns <code>null</code> because <code>layout_shift_attribution.cc</code> checks <code>IsInShadowTree()</code> instead of <code>Retarget()</code>.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SLIDE 18: WebPerf Demo Concept (LCP #152 Reproduction) -->
-    <section class="slide" data-slide-index="17" data-part="3">
-      <div class="slide-body">
-        <h2>Inconsistent LCP Attribution in Shadow DOM (<a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank"><code>lcp#152</code></a>)</h2>
-        <p class="slide-lead">
-          When progressive content paints inside a single <code>closed</code> custom element (<code>&lt;lcp-shadow-probe&gt;</code>), three different things happen today:
-        </p>
-
-        <div class="grid-3">
-          <div class="card">
-            <span class="status-badge status-fail" style="align-self:flex-start;">1. Inline &lt;span&gt; (0ms)</span>
-            <h3>Walks Past Inline Host</h3>
-            <p>
-              Because custom elements default to <code>display: inline</code>, Paint Timing text aggregation walks past the shadow boundary to the outer light-DOM <code>&lt;div#light-wrapper&gt;</code>!
-            </p>
-            <div class="formula-pill">element → &lt;div#light-wrapper&gt; (Wrong!)</div>
-          </div>
-
-          <div class="card">
-            <span class="status-badge status-warn" style="align-self:flex-start;">2. Block &lt;p&gt; (600ms)</span>
-            <h3>Drops Host Attribution</h3>
-            <p>
-              When a block <code>&lt;p#inner-para&gt;</code> paints inside the closed shadow root, it is the new containing block—so <code>exposed for paint timing</code> returns <code>element: null</code> and <code>id: ""</code>.
-            </p>
-            <div class="formula-pill">element → null · id → "" (Host lost!)</div>
-          </div>
-
-          <div class="card">
-            <span class="status-badge status-info" style="align-self:flex-start;">3. Inner &lt;img&gt; (1200ms)</span>
-            <h3>Reports <code>url</code>, Drops <code>element</code></h3>
-            <p>
-              <code>entry.url</code> is reported (matching <code>ResourceTiming</code>, since URLs don't grant DOM access), but <code>entry.element</code> is <code>null</code> and <code>entry.id</code> is <code>""</code>—so you can't tell which component painted it!
-            </p>
-            <div class="formula-pill">url reported ✅ · element → null ❌</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- =========================================================
          PART 5: WG DECISIONS
          ========================================================= -->
 
-    <!-- SLIDE 14: Core Spec Proposal (Component User Default) -->
-    <section class="slide" data-slide-index="13" data-part="4">
+    <!-- SLIDE 15: Core Spec Proposal (Component User Default) -->
+    <section class="slide" data-slide-index="14" data-part="4">
       <div class="slide-body">
         <h2>Default View: <code>retarget for performance timing</code></h2>
 
@@ -865,8 +796,8 @@
       </div>
     </section>
 
-    <!-- SLIDE 15: Stretch Goal (Component Author Opt-In) -->
-    <section class="slide" data-slide-index="14" data-part="4">
+    <!-- SLIDE 16: Stretch Goal (Component Author Opt-In) -->
+    <section class="slide" data-slide-index="15" data-part="4">
       <div class="slide-body">
         <h2>Component Author View: Capability Opt-In on <code>observe()</code></h2>
         <p class="slide-lead">
@@ -899,8 +830,8 @@
       </div>
     </section>
 
-    <!-- SLIDE 19: 4 Proposed Resolutions for WebPerf WG -->
-    <section class="slide" data-slide-index="18" data-part="4">
+    <!-- SLIDE 17: 4 Proposed Resolutions for WebPerf WG -->
+    <section class="slide" data-slide-index="16" data-part="4">
       <div class="slide-body">
         <h2>4 Decisions for the Working Group</h2>
 
@@ -948,10 +879,85 @@
       </div>
     </section>
 
-    <!-- SLIDE 17: Appendix (Engine Implementation Details & WPT Plan) -->
-    <section class="slide" data-slide-index="16" data-part="4">
+    <!-- =========================================================
+         APPENDIX
+         ========================================================= -->
+
+    <!-- SLIDE 18: Appendix (Event Timing vs CLS Details) -->
+    <section class="slide" data-slide-index="17" data-part="4">
       <div class="slide-body">
-        <h2>Engine Implementation Roadmap &amp; WPT Suite Plan</h2>
+        <h2>Appendix: Event Timing Retargets to Host—While CLS Drops <code>node</code> to <code>null</code></h2>
+        <p class="slide-lead">
+          Running <code>PerformanceObserver</code> on the exact same components from Demos 1 &amp; 2 shows the inconsistency (<a href="demos/demo-1-events.html?mode=webperf" target="_blank">Event Timing Demo ↗</a> · <a href="demos/demo-2-geometry-cls.html?mode=webperf" target="_blank">CLS Demo ↗</a>):
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <span class="status-badge status-pass" style="align-self:flex-start;">PerformanceEventTiming (INP)</span>
+            <h3>Retargets <code>entry.target</code> to Host ✅</h3>
+            <ul>
+              <li>Clicking <code>open</code> or <code>closed</code> shadow buttons sets <code>entry.target</code> to <code>&lt;open-demo-card&gt;</code> / <code>&lt;closed-demo-card&gt;</code>.</li>
+              <li>Internal <code>mouseover</code> between two shadow elements stops at the <code>ShadowRoot</code> and reports <code>entry.target = null</code>.</li>
+              <li><strong>Open WG Question (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>):</strong> <code>targetSelector</code> is modeled on <code>event.composedPath()</code>—should it pierce <code>open</code> roots by default or stop at the host?</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-warn" style="align-self:flex-start;">LayoutShift (CLS)</span>
+            <h3>Exposes Rects, Drops <code>node: null</code> ⚠️</h3>
+            <ul>
+              <li><code>LayoutShift</code> already reports the exact <code>previousRect</code> and <code>currentRect</code> of the shifting shadow element!</li>
+              <li>Calling <code>document.elementFromPoint(currentRect.x, currentRect.y)</code> synchronously already returns <code>&lt;my-closed-hero&gt;</code>.</li>
+              <li>Yet <code>sources[0].node</code> returns <code>null</code> because <code>layout_shift_attribution.cc</code> checks <code>IsInShadowTree()</code> instead of <code>Retarget()</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 19: Appendix (LCP #152 Details) -->
+    <section class="slide" data-slide-index="18" data-part="4">
+      <div class="slide-body">
+        <h2>Appendix: Inconsistent LCP Attribution in Shadow DOM (<a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank"><code>lcp#152</code></a>)</h2>
+        <p class="slide-lead">
+          When progressive content paints inside a single <code>closed</code> custom element (<code>&lt;lcp-shadow-probe&gt;</code>), three different things happen today (<a href="demos/demo-3-lcp-resource.html" target="_blank">3-Step LCP Demo ↗</a>):
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="status-badge status-fail" style="align-self:flex-start;">1. Inline &lt;span&gt; (0ms)</span>
+            <h3>Walks Past Inline Host</h3>
+            <p>
+              Because custom elements default to <code>display: inline</code>, Paint Timing text aggregation walks past the shadow boundary to the outer light-DOM <code>&lt;div#light-wrapper&gt;</code>!
+            </p>
+            <div class="formula-pill">element → &lt;div#light-wrapper&gt; (Wrong!)</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-warn" style="align-self:flex-start;">2. Block &lt;p&gt; (600ms)</span>
+            <h3>Drops Host Attribution</h3>
+            <p>
+              When a block <code>&lt;p#inner-para&gt;</code> paints inside the closed shadow root, it is the new containing block—so <code>exposed for paint timing</code> returns <code>element: null</code> and <code>id: ""</code>.
+            </p>
+            <div class="formula-pill">element → null · id → "" (Host lost!)</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-info" style="align-self:flex-start;">3. Inner &lt;img&gt; (1200ms)</span>
+            <h3>Reports <code>url</code>, Drops <code>element</code></h3>
+            <p>
+              <code>entry.url</code> is reported (matching <code>ResourceTiming</code>, since URLs don't grant DOM access), but <code>entry.element</code> is <code>null</code> and <code>entry.id</code> is <code>""</code>—so you can't tell which component painted it!
+            </p>
+            <div class="formula-pill">url reported ✅ · element → null ❌</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 20: Appendix (Engine Implementation Details & WPT Plan) -->
+    <section class="slide" data-slide-index="19" data-part="4">
+      <div class="slide-body">
+        <h2>Appendix: Engine Implementation Roadmap &amp; WPT Suite Plan</h2>
 
         <div class="tab-bar" role="tablist">
           <button class="tab-btn active" type="button" onclick="selectImplTab('blink', this)">Chromium (Blink)</button>
