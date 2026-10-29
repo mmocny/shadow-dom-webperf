@@ -75,7 +75,6 @@
     <!-- SLIDE 1: Title & Overview -->
     <section class="slide active" data-slide-index="0" data-part="0">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 1 · Introduction</div>
         <h1>Shadow DOM in Web Performance APIs</h1>
         <p class="slide-lead">
           How does Shadow DOM work across the Web Platform, what happens when we measure Web Components with Performance APIs today, and how should we align the specs?
@@ -107,7 +106,6 @@
     <!-- SLIDE 2: Platform Demo 1 Concept (What Is Shadow DOM? & querySelector Guard) -->
     <section class="slide" data-slide-index="1" data-part="1">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof · 1 of 3</div>
         <h2>What Is Shadow DOM?</h2>
         <p class="slide-lead">
           A private DOM subtree attached to a <strong>Shadow Host</strong> so page styles and scripts don't collide with component internals.
@@ -147,7 +145,6 @@
     <!-- SLIDE 3: Diagram (DOM "Tree of Trees" Only) -->
     <section class="slide" data-slide-index="2" data-part="1">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof · Initial Mental Model</div>
         <h2>The DOM "Tree of Trees" (<a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" target="_blank">MDN</a>)</h2>
         <p class="slide-lead">
           To DOM traversal APIs (<code>querySelector</code>, <code>getElementById</code>, <code>parentNode</code>), the <strong>Shadow Tree</strong> is a separate DOM tree separated from the <strong>Document Tree</strong> by the <strong>Shadow Boundary</strong>:
@@ -238,7 +235,6 @@
       <div class="slide-body">
         <div class="demo-slide-header">
           <div>
-            <div class="slide-eyebrow">Part 2 · Interactive Demo 1 · DOM Tree Encapsulation</div>
             <h2>Live Demo: Shadow DOM &amp; <code>querySelectorAll()</code></h2>
           </div>
           <div class="demo-slide-actions">
@@ -255,7 +251,6 @@
     <!-- SLIDE 4: Platform Demo 2 Concept (DOM Events & Retargeting) -->
     <section class="slide" data-slide-index="3" data-part="1">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 2 of 3</div>
         <h2>DOM Events Bubble Out—and Retarget to the Shadow Host</h2>
         <p class="slide-lead">
           When a user clicks inside an <code>open</code> or <code>closed</code> Shadow Root, the outer page receives the event—with <code>event.target</code> rewritten via <a href="https://dom.spec.whatwg.org/#retarget" target="_blank">WHATWG DOM <code>retarget()</code></a>:
@@ -297,7 +292,6 @@
       <div class="slide-body">
         <div class="demo-slide-header">
           <div>
-            <div class="slide-eyebrow">Part 2 · Interactive Demo 2 · Zero Performance APIs</div>
             <h2>Live Demo: DOM Events, <code>event.target</code> &amp; <code>composedPath()</code></h2>
           </div>
           <div class="demo-slide-actions">
@@ -314,7 +308,6 @@
     <!-- SLIDE 6: Platform Demo 3 Concept (Subresource Load, window.onload & elementFromPoint) -->
     <section class="slide" data-slide-index="5" data-part="1">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 3 of 3</div>
         <h2>Slow Subresources Inside Shadow DOM Delay <code>window.onload</code></h2>
         <p class="slide-lead">
           Even when an <code>&lt;img&gt;</code> is encapsulated inside an <code>open</code> or <code>closed</code> Shadow Root, its network loading and rendered geometry participate in the outer document:
@@ -356,7 +349,6 @@
       <div class="slide-body">
         <div class="demo-slide-header">
           <div>
-            <div class="slide-eyebrow">Part 2 · Interactive Demo 3 · Zero Performance APIs</div>
             <h2>Live Demo: Slow Shadow DOM Subresources &amp; <code>window.onload</code></h2>
           </div>
           <div class="demo-slide-actions">
@@ -377,7 +369,6 @@
     <!-- SLIDE 6: Visual Architecture Diagram (Modern MDN shadowdom.svg) -->
     <section class="slide" data-slide-index="5" data-part="2">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 3 · Shadow DOM Model</div>
         <h2>The "Tree of Trees" vs. The "Flattened Tree"</h2>
         <p class="slide-lead">
           DOM APIs see separate trees divided by the <strong>Shadow Boundary</strong>, while layout, paint, and input operate on the unified <strong>Flattened Tree</strong> (<a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" target="_blank">MDN</a> · <a href="https://drafts.csswg.org/css-scoping/#flat-tree" target="_blank">CSS Scoping §3.1</a>).
@@ -545,7 +536,6 @@
     <!-- SLIDE 10: Two Realms & MDN Principle -->
     <section class="slide" data-slide-index="9" data-part="2">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 3 · Shadow DOM Model · Summary</div>
         <h2>Summary: What Shadow DOM Encapsulates—And Why</h2>
         <p class="slide-lead">
           Per <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" target="_blank">MDN</a>, Shadow DOM exists so <em>"code running in the page cannot accidentally break a custom element by modifying its internal implementation."</em>
@@ -585,7 +575,6 @@
     <!-- SLIDE 11: Three Modes (open, closed, UA) -->
     <section class="slide" data-slide-index="10" data-part="2">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 3 · Shadow DOM Model · Summary</div>
         <h2>Summary: <code>open</code> and <code>closed</code> Behave Identically by Default</h2>
         <p class="slide-lead">
           Across WHATWG DOM and HTML, <code>mode</code> is only checked in <strong>4 legacy APIs from 2015</strong>. All modern APIs treat <code>open</code> and <code>closed</code> the same.
@@ -632,7 +621,6 @@
     <!-- SLIDE 9: What Breaks Today When a Site Uses Shadow DOM? -->
     <section class="slide" data-slide-index="8" data-part="3">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 4 · Web Performance Gaps &amp; Deep Dive</div>
         <h2>What Breaks Today When a Site Uses Shadow DOM?</h2>
         <p class="slide-lead">
           Unlike DOM Events and Hit-Testing, Web Performance APIs currently handle Shadow DOM inconsistently across three areas:
@@ -672,7 +660,6 @@
     <!-- SLIDE 10: Two Audiences & Three Core Principles for WebPerf -->
     <section class="slide" data-slide-index="9" data-part="3">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 4 · Expanding to Web Performance APIs</div>
         <h2>Two Audiences for Web Components (<a href="https://github.com/w3c/element-timing/issues/3" target="_blank"><code>element-timing#3</code></a>)</h2>
         <p class="slide-lead">
           Distinguishing <strong>Component Users</strong> from <strong>Component Authors</strong> explains both what is shown by default and what requires opt-in:
@@ -712,7 +699,6 @@
     <!-- SLIDE 9: Current State Scorecard -->
     <section class="slide" data-slide-index="8" data-part="3">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 4 · Expanding to Web Performance APIs</div>
         <h2>Scorecard: How Do WebPerf Specs Compare Today?</h2>
 
         <div class="table-wrap">
@@ -771,7 +757,6 @@
     <!-- SLIDE 16: WebPerf Demo Concept (Event Timing vs CLS on the Same Components) -->
     <section class="slide" data-slide-index="15" data-part="3">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 4 · Web Performance Demos · Same Components + PerformanceObserver</div>
         <h2>Event Timing Retargets to Host—While CLS Drops <code>node</code> to <code>null</code></h2>
         <p class="slide-lead">
           Running <code>PerformanceObserver</code> on the exact same components from Demos 1 &amp; 2 shows the inconsistency:
@@ -804,7 +789,6 @@
     <!-- SLIDE 18: WebPerf Demo Concept (LCP #152 Reproduction) -->
     <section class="slide" data-slide-index="17" data-part="3">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 4 · Web Performance Demos · Reproducing w3c/largest-contentful-paint#152</div>
         <h2>Inconsistent LCP Attribution in Shadow DOM (<a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank"><code>lcp#152</code></a>)</h2>
         <p class="slide-lead">
           When progressive content paints inside a single <code>closed</code> custom element (<code>&lt;lcp-shadow-probe&gt;</code>), three different things happen today:
@@ -848,7 +832,6 @@
     <!-- SLIDE 14: Core Spec Proposal (Component User Default) -->
     <section class="slide" data-slide-index="13" data-part="4">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 5 · Core Proposal · Audience 1: Component Users (Default)</div>
         <h2>Default View: <code>retarget for performance timing</code></h2>
 
         <div class="algo-box">
@@ -885,7 +868,6 @@
     <!-- SLIDE 15: Stretch Goal (Component Author Opt-In) -->
     <section class="slide" data-slide-index="14" data-part="4">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 5 · Stretch Goal · Audience 2: Component Authors (Opt-In)</div>
         <h2>Component Author View: Capability Opt-In on <code>observe()</code></h2>
         <p class="slide-lead">
           When a Component Author holds a <code>ShadowRoot</code> reference, passing it to <code>observe()</code> unlocks <strong>both</strong> inner attribution and entries filtered from the main timeline:
@@ -920,7 +902,6 @@
     <!-- SLIDE 16: 4 Proposed Resolutions for WebPerf WG -->
     <section class="slide" data-slide-index="15" data-part="4">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 5 · Call to Action for WebPerf WG</div>
         <h2>4 Decisions for the Working Group</h2>
 
         <div class="grid-4">
@@ -966,7 +947,6 @@
     <!-- SLIDE 17: Appendix (Engine Implementation Details & WPT Plan) -->
     <section class="slide" data-slide-index="16" data-part="4">
       <div class="slide-body">
-        <div class="slide-eyebrow">Appendix · Reference for Implementors</div>
         <h2>Engine Implementation Roadmap &amp; WPT Suite Plan</h2>
 
         <div class="tab-bar" role="tablist">
