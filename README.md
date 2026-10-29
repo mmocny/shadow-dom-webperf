@@ -23,9 +23,9 @@ Each demo is also available as a standalone test page:
 1. **Include Author Shadow DOM (`open` & `closed`); Exclude `UA` Shadow Roots:**
    Update Paint Timing and Largest Contentful Paint to traverse shadow-including descendants for author `open` and `closed` roots equally, while excluding User-Agent (`UA`) shadow trees.
 2. **Default View (Component Users) — Retarget `element`, `id` & `node` to Host; Keep `url`:**
-   Introduce a shared `retarget for performance timing(node, document, allowedScopes)` algorithm that retargets `LCP.element` (and `LCP.id` → Host's `id`), `CLS.sources[i].node`, `LoAF.invoker`, and `ContainerTiming` to the Shadow Host, preserves slotted Light DOM nodes, and keeps `LCP.url` reported (matching `ResourceTiming`).
-3. **Cap Inline Text & Decide `targetSelector` (`event-timing#126`):**
-   Cap Paint Timing inline text aggregation at Shadow Host boundaries, and decide whether Event Timing's `targetSelector` pierces `open` shadow roots (like `event.composedPath()`) or stops at the Shadow Host.
+   Introduce a shared `retarget for performance timing(node, document, allowedScopes)` algorithm that retargets `LCP.element` (and `LCP.id` → Host's `id`), `CLS.sources[i].node`, and `ContainerTiming` to the Shadow Host, preserves slotted Light DOM nodes, and keeps `LCP.url` reported (matching `ResourceTiming`).
+3. **Cap Inline Text & Decide Selector/Invoker Strings (`event-timing#126` & `LoAF.invoker`):**
+   Cap Paint Timing inline text aggregation at Shadow Host boundaries, and decide whether string attribution (`EventTiming.targetSelector` and `LoAF.invoker`) can expose inner selectors/IDs (like `event.composedPath()`) or stops at the Shadow Host.
 4. **Opt-In View (Component Authors) — `{ shadowRoots, root }` on `observe()`:**
    Allow Component Authors holding a `ShadowRoot` reference to pass `shadowRoots` / `root` in `PerformanceObserverInit` to unlock un-retargeted inner attribution *and* receive entries filtered from the main document timeline (`elementtiming`, `containertiming`, and shadow-confined `event`s).
 

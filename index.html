@@ -642,9 +642,9 @@
             <span class="status-badge status-warn" style="align-self:flex-start;">Event Timing &amp; LoAF</span>
             <h3>Mostly Retargeted, With Edge Cases</h3>
             <p>
-              Event Timing retargets <code>entry.target</code> to the Shadow Host by spec (though Chrome doesn't do this 100% correctly in all cases yet, <a href="https://crbug.com/1367329" target="_blank">crbug/1367329</a>), while <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) and LoAF <code>invoker</code> can still expose inner shadow selectors/IDs.
+              Event Timing retargets <code>entry.target</code> to the Shadow Host by spec (though Chrome doesn't do this 100% correctly in all cases yet, <a href="https://crbug.com/1367329" target="_blank">crbug/1367329</a>). Whether string attribution (<code>targetSelector</code> <a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a> &amp; LoAF <code>invoker</code>) should expose inner selectors (like <code>composedPath()</code>) is an open WG question.
             </p>
-            <div class="formula-pill">Host retargeted · Chrome edge-case bug · selector/ID questions</div>
+            <div class="formula-pill">Host retargeted · Chrome edge-case bug · selector/invoker strings</div>
           </div>
 
           <div class="card">
@@ -741,8 +741,8 @@
               <tr>
                 <td><strong>Long Animation Frames (LoAF)</strong></td>
                 <td><span class="status-badge status-pass">Yes (Frame Timing)</span></td>
-                <td><span class="status-badge status-fail">Leaks inner <code>#id</code> ❌</span></td>
-                <td>Retarget <code>event.currentTarget</code> before serializing <code>script.invoker</code>.</td>
+                <td><span class="status-badge status-warn">Inner <code>#id</code> string ⚠️</span></td>
+                <td>Align with <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>): decide if string attribution can expose inner IDs (like <code>composedPath()</code>) or retargets to Host.</td>
               </tr>
               <tr>
                 <td><strong>Container &amp; Element Timing</strong></td>
@@ -852,17 +852,17 @@
               <h3>Retarget Attribution to the Host</h3>
             </div>
             <p>
-              Retarget <code>LCP.element</code>, <code>LCP.id</code>, <code>CLS.node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host—while keeping <code>&lt;slot&gt;</code> nodes and <code>LCP.url</code>.
+              Retarget <code>LCP.element</code>, <code>LCP.id</code>, <code>CLS.node</code>, and <code>ContainerTiming</code> to the Shadow Host—while keeping <code>&lt;slot&gt;</code> nodes and <code>LCP.url</code>.
             </p>
           </div>
 
           <div class="card">
             <div class="card-head">
               <span class="card-num">3</span>
-              <h3>Cap Inline Text &amp; Decide <code>targetSelector</code></h3>
+              <h3>Cap Inline Text &amp; Decide Selector Strings</h3>
             </div>
             <p>
-              Stop Paint Timing inline text aggregation at Shadow Host boundaries, and resolve whether Event Timing's <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) stops at the Host or pierces <code>open</code> roots.
+              Stop Paint Timing inline text aggregation at Shadow Host boundaries, and decide whether string attribution (<code>targetSelector</code> <a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a> &amp; <code>LoAF.invoker</code>) exposes inner selectors (like <code>composedPath()</code>) or stops at the Host.
             </p>
           </div>
 
