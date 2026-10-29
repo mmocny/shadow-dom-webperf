@@ -107,38 +107,38 @@
     <!-- SLIDE 2: Platform Demo 1 Concept (What Is Shadow DOM? & querySelector Guard) -->
     <section class="slide" data-slide-index="1" data-part="1">
       <div class="slide-body">
-        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 1 of 3</div>
-        <h2>What Is Shadow DOM? How <code>querySelector()</code> Is Guarded</h2>
+        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof · 1 of 3</div>
+        <h2>What Is Shadow DOM?</h2>
         <p class="slide-lead">
-          A Web Component attaches a private DOM subtree (<code>host.attachShadow({ mode })</code>) to a light-DOM <strong>Shadow Host</strong> so page scripts and styles cannot accidentally collide with its internals:
+          A private DOM subtree attached to a <strong>Shadow Host</strong> so page styles and scripts don't collide with component internals.
         </p>
 
         <div class="grid-3">
           <div class="card">
             <span class="card-num">1</span>
-            <h3><code>document.querySelectorAll()</code> Stops</h3>
+            <h3>Light DOM Queries Stop</h3>
             <p>
-              Standard DOM queries (<code>document.querySelectorAll('button')</code>) only match Light DOM elements—never crossing a Shadow Boundary into <code>open</code> or <code>closed</code> roots.
+              <code>document.querySelectorAll()</code> stops at the Shadow Boundary.
             </p>
-            <div class="formula-pill">Only matches &lt;light-demo-card&gt; buttons</div>
+            <div class="formula-pill">document.querySelectorAll('button')</div>
           </div>
 
           <div class="card">
             <span class="card-num">2</span>
-            <h3><code>open</code> Mode: Explicit Opt-In</h3>
+            <h3><code>open</code> Shadow Root</h3>
             <p>
-              With <code>attachShadow({ mode: 'open' })</code>, page code can inspect internals <em>only</em> by explicitly crossing <code>host.shadowRoot</code>.
+              Hidden by default, but reachable via <code>host.shadowRoot</code>.
             </p>
-            <div class="formula-pill">openHost.shadowRoot.querySelectorAll('button')</div>
+            <div class="formula-pill">host.shadowRoot.querySelectorAll(...)</div>
           </div>
 
           <div class="card">
             <span class="card-num">3</span>
-            <h3>Hosts Live in Light DOM</h3>
+            <h3><code>closed</code> Shadow Root</h3>
             <p>
-              With <code>mode: 'closed'</code>, <code>host.shadowRoot</code> is <code>null</code>—but the outer <strong>Shadow Host</strong> element itself (`<closed-demo-card>`) is always in the Light DOM!
+              <code>host.shadowRoot</code> is <code>null</code>—only the outer <strong>Host</strong> element is in Light DOM.
             </p>
-            <div class="formula-pill">document.querySelectorAll('closed-demo-card')</div>
+            <div class="formula-pill">host.shadowRoot → null</div>
           </div>
         </div>
       </div>
