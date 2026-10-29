@@ -775,8 +775,8 @@
         <div class="grid-3">
           <div class="card">
             <span class="card-num">1</span>
-            <h3>Host + <code>&lt;slot&gt;</code> + Keep <code>url</code></h3>
-            <p>Retarget inner shadow nodes to <code>&lt;my-host&gt;</code> (while keeping <code>LCP.url</code> reported, just like <code>ResourceTiming</code>). Slotted light-DOM children return directly!</p>
+            <h3>Host + <code>&lt;slot&gt;</code> Attribution</h3>
+            <p>Inner shadow nodes walk up to the outermost <code>&lt;my-host&gt;</code>, while light-DOM children passed into a <code>&lt;slot&gt;</code> remain in <code>Document</code> and return directly!</p>
           </div>
           <div class="card">
             <span class="card-num">2</span>
