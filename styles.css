@@ -345,13 +345,121 @@ body.mode-document .progress-bar-track {
 @media (max-width: 900px) {
   body:not(.mode-document) {
     height: auto;
-    overflow: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
+
+  .deck-header {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .deck-main {
+    padding: 12px;
+    display: block;
+  }
+
+  .slide {
+    height: auto;
+    overflow: visible;
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .slide-body > .grid-2,
+  .slide-body > .grid-3,
+  .slide-body > .grid-4,
+  .slide-body > .table-wrap,
+  .slide-body > .impl-panel.active,
+  .slide-body > .algo-box,
+  .slide-body > .demo-launch-card {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
   .grid-2, .grid-3, .grid-4 {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
-  .slide {
-    padding: 28px 22px;
+
+  .slide h1 {
+    font-size: clamp(24px, 6.2vw, 34px);
+  }
+
+  .slide h2 {
+    font-size: clamp(20px, 5.4vw, 28px);
+  }
+
+  .slide h3 {
+    font-size: 17px;
+  }
+
+  .slide-lead {
+    font-size: 15px;
+    margin-top: -4px;
+  }
+
+  .card,
+  .card.hero {
+    padding: 16px;
+  }
+
+  .demo-launch-card {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .demo-launch-title {
+    flex-wrap: wrap;
+    font-size: 14.5px;
+  }
+
+  .demo-launch-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tab-bar {
+    flex-wrap: wrap;
+  }
+
+  pre.code-block {
+    padding: 14px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .brand-group {
+    display: none;
+  }
+
+  .deck-controls {
+    width: 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .slide-select {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    font-size: 12px;
+    padding: 5px 6px;
+  }
+
+  .nav-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .slide-counter {
+    min-width: 40px;
+    font-size: 11.5px;
   }
 }
 
