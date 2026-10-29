@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo 2: Geometry, Hit-Testing &amp; CLS</title>
+  <style>
+    :root {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 20px; }
+    .shell {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    .mode-switch { display: flex; gap: 6px; }
+    .mode-link {
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+    }
+    .mode-link.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    button {
+      justify-self: start;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .output {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .key { color: #64748b; }
+    .val { font-weight: 700; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <h1 id="demo-title">Demo 2: Hit-Testing &amp; Geometry</h1>
+      <div class="mode-switch">
+        <a class="mode-link" id="link-platform" href="?mode=platform">Hit-Testing</a>
+        <a class="mode-link" id="link-webperf" href="?mode=webperf">CLS</a>
+      </div>
+    </div>
+
+    <button id="shift-btn" type="button">Trigger Shift (600ms delay)</button>
+    <my-closed-hero id="hero-host"></my-closed-hero>
+
+    <div class="output">
+      <div><span class="key" id="k1">elementFromPoint(x, y):</span> <span class="val" id="v1">—</span></div>
+      <div><span class="key" id="k2">host.getBoundingClientRect().height:</span> <span class="val" id="v2">84px</span></div>
+    </div>
+  </div>
+
+  <script>
+    const isPlatformOnly = new URLSearchParams(location.search).get('mode') === 'platform';
+    document.getElementById(isPlatformOnly ? 'link-platform' : 'link-webperf').classList.add('active');
+
+    const k1 = document.getElementById('k1');
+    const v1 = document.getElementById('v1');
+    const k2 = document.getElementById('k2');
+    const v2 = document.getElementById('v2');
+
+    if (!isPlatformOnly) {
+      document.getElementById('demo-title').textContent = 'Demo 2: LayoutShift (CLS)';
+      k1.textContent = 'entry.sources[0].node:';
+      k2.textContent = 'elementFromPoint(x, y):';
+      v2.textContent = '—';
+    }
+
+    function formatNode(node) {
+      if (!node) return 'null';
+      return `<${node.tagName.toLowerCase()}${node.id ? '#' + node.id : ''}>`;
+    }
+
+    let triggerInnerShift = null;
+    customElements.define('my-closed-hero', class extends HTMLElement {
+      connectedCallback() {
+        const sr = this.attachShadow({ mode: 'closed' });
+        const style = document.createElement('style');
+        style.textContent = `
+          :host { display: block; height: 84px; overflow: hidden; border: 1px dashed #94a3b8; border-radius: 8px; padding: 8px; }
+          .spacer { height: 0; }
+          .spacer.shifted { height: 34px; }
+          .card { background: #0284c7; color: #fff; border-radius: 6px; padding: 8px 12px; font-size: 13px; font-weight: 600; }
+        `;
+        const spacer = document.createElement('div');
+        spacer.className = 'spacer';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.id = 'inner-card';
+        card.textContent = 'Inner Closed Shadow Card';
+        sr.append(style, spacer, card);
+
+        triggerInnerShift = () => {
+          spacer.classList.remove('shifted');
+          setTimeout(() => {
+            spacer.classList.add('shifted');
+            const r = this.getBoundingClientRect();
+            const hit = document.elementFromPoint(r.left + 20, r.top + 50);
+            console.log('[Shift complete]', { rect: r, elementFromPoint: hit });
+            if (isPlatformOnly) {
+              v1.textContent = formatNode(hit);
+              v2.textContent = `${Math.round(r.height)}px`;
+            }
+          }, 600);
+        };
+      }
+    });
+
+    if (!isPlatformOnly && 'LayoutShift' in window) {
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const src = entry.sources && entry.sources[0];
+          const cr = src ? src.currentRect : null;
+          const hit = cr ? document.elementFromPoint(cr.left + 10, cr.top + 10) : null;
+          console.log('[LayoutShift]', entry, { elementFromPoint: hit });
+          v1.textContent = formatNode(src && src.node);
+          v2.textContent = formatNode(hit);
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    }
+
+    document.getElementById('shift-btn').addEventListener('click', () => {
+      if (triggerInnerShift) triggerInnerShift();
+    });
+  </script>
+</body>
+</html>

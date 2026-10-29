@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shadow DOM in Web Performance APIs — W3C WebPerf WG</title>
+  <meta name="description" content="W3C Web Performance Working Group presentation: Shadow DOM concepts, core Web Platform observability demos, and aligning Web Performance specifications.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="deck-header">
+    <div class="brand-group">
+      <span class="w3c-tag">W3C WebPerf WG</span>
+    </div>
+
+    <nav class="story-stepper" aria-label="Presentation sections">
+      <button class="step-pill active" type="button" data-part="0" onclick="jumpToPart('0')">1. The Problem</button>
+      <button class="step-pill" type="button" data-part="1" onclick="jumpToPart('1')">2. Web Platform Proof</button>
+      <button class="step-pill" type="button" data-part="2" onclick="jumpToPart('2')">3. Shadow DOM Model</button>
+      <button class="step-pill" type="button" data-part="3" onclick="jumpToPart('3')">4. WebPerf Gaps</button>
+      <button class="step-pill" type="button" data-part="4" onclick="jumpToPart('4')">5. WG Decisions</button>
+    </nav>
+
+    <div class="deck-controls">
+      <select id="slide-jump-select" class="slide-select" aria-label="Jump to slide">
+        <optgroup label="1. The Problem">
+          <option value="0">1. Title &amp; Goal</option>
+          <option value="1">2. The Interop &amp; RUM Problem</option>
+        </optgroup>
+        <optgroup label="2. Web Platform Proof (No Perf APIs)">
+          <option value="2">3. Demo 1: DOM Events &amp; Retargeting</option>
+          <option value="3">4. Demo 2: Geometry &amp; Hit-Testing</option>
+          <option value="4">5. Demo 3: Subresource Load &amp; window.onload</option>
+        </optgroup>
+        <optgroup label="3. Shadow DOM Model">
+          <option value="5">6. Diagram: DOM Tree vs. Flattened Tree</option>
+          <option value="6">7. What Shadow DOM Encapsulates—And Why</option>
+          <option value="7">8. open vs. closed vs. UA</option>
+        </optgroup>
+        <optgroup label="4. WebPerf Gaps &amp; Demos">
+          <option value="8">9. Two Audiences for Web Components</option>
+          <option value="9">10. Current WebPerf Spec Scorecard</option>
+          <option value="10">11. WebPerf Demo: Event Timing vs. CLS</option>
+          <option value="11">12. WebPerf Demo: The LCP #152 Bug</option>
+        </optgroup>
+        <optgroup label="5. WG Decisions">
+          <option value="12">13. Default: Component User View</option>
+          <option value="13">14. Opt-In: Component Author View</option>
+          <option value="14">15. 4 Decisions for WebPerf WG</option>
+          <option value="15">16. Appendix: Engine &amp; WPT Plan</option>
+        </optgroup>
+      </select>
+
+      <button id="prev-slide-btn" class="nav-btn" type="button">←</button>
+      <span id="slide-counter-label" class="slide-counter">1 / 16</span>
+      <button id="next-slide-btn" class="nav-btn primary" type="button">Next →</button>
+      <button id="toggle-mode-btn" class="nav-btn" type="button">All Slides</button>
+    </div>
+  </header>
+
+  <div class="progress-bar-track">
+    <div id="progress-bar-fill" class="progress-bar-fill"></div>
+  </div>
+
+  <main class="deck-main">
+
+    <!-- =========================================================
+         PART 1: THE PROBLEM
+         ========================================================= -->
+
+    <!-- SLIDE 1: Title & Overview -->
+    <section class="slide active" data-slide-index="0" data-part="0">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 1 · The Problem</div>
+        <h1>Shadow DOM in Web Performance APIs</h1>
+        <p class="slide-lead">
+          Today, Web Performance specs and browsers disagree on how to handle Shadow DOM.
+          We can solve this by following the exact model the rest of the Web Platform already uses.
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Test Pure Platform APIs</h3>
+            <p>3 standalone demos showing what light DOM <em>already</em> observes on <code>closed</code> Shadow DOM (zero Perf APIs).</p>
+            <div class="formula-pill">Slides 3–5</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Understand Shadow DOM</h3>
+            <p>Why the platform separates <strong>DOM traversal</strong> from <strong>Flat-Tree rendering</strong>.</p>
+            <div class="formula-pill">Slides 6–8</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Align WebPerf Specs</h3>
+            <p>Apply <code>retarget()</code> across LCP, CLS, Event Timing, LoAF &amp; Container Timing.</p>
+            <div class="formula-pill">Slides 9–15</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: Why This Matters Today -->
+    <section class="slide" data-slide-index="1" data-part="0">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 1 · The Problem</div>
+        <h2>What Breaks Today When a Site Uses Shadow DOM?</h2>
+        <p class="slide-lead">
+          Moving UI into Web Components currently breaks Web Performance APIs in three different ways:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="status-badge status-fail" style="align-self:flex-start;">LCP (&amp; CLS)</span>
+            <h3>Missing or <code>null</code> Attribution</h3>
+            <p>
+              <strong>Safari</strong> ignores Shadow DOM in LCP entirely (<a href="https://commits.webkit.org/310655@main" target="_blank">310655@main</a>). <strong>Chrome &amp; Firefox</strong> measure it, but strip <code>entry.element</code> to <code>null</code> while leaking <code>url</code> (<a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank">LCP #152</a>).
+            </p>
+            <div class="formula-pill">Note: CLS has the same issue (sources[i].node → null)</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-warn" style="align-self:flex-start;">Event Timing &amp; LoAF</span>
+            <h3>Inconsistent Edge Cases</h3>
+            <p>
+              Composed events retarget <code>target</code> to the host, but <strong>shadow-confined events</strong> and <strong>no-listener events</strong> (<a href="https://crbug.com/1367329" target="_blank">crbug/1367329</a>) become <code>target: null</code> in Chrome (while Safari still retargets no-listener events to the host), and <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) / LoAF <code>invoker</code> leak inner shadow IDs.
+            </p>
+            <div class="formula-pill">Host retargeted · null on confined/no-listener · leaked IDs</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-fail" style="align-self:flex-start;">Element &amp; Container Timing</span>
+            <h3>Completely Unsupported</h3>
+            <p>
+              <code>elementtiming</code> (<a href="https://github.com/w3c/element-timing/issues/3" target="_blank">#3</a>) and <code>containertiming</code> (<a href="https://github.com/w3c/container-timing/issues/14" target="_blank">#14</a>) inside Shadow DOM are completely dropped—even for the component's own author.
+            </p>
+            <div class="formula-pill">Zero entries emitted inside ShadowRoots</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PART 2: WEB PLATFORM PROOF (NO PERFORMANCE APIS)
+         ========================================================= -->
+
+    <!-- SLIDE 3: Platform Demo 1 (DOM Events & Retargeting) -->
+    <section class="slide" data-slide-index="2" data-part="1">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 1 of 3</div>
+        <h2>DOM Events Bubble Out—and Retarget to the Shadow Host</h2>
+        <p class="slide-lead">
+          When a user clicks inside an <code>open</code> or <code>closed</code> Shadow Root, the outer page receives the event—with <code>event.target</code> rewritten via <a href="https://dom.spec.whatwg.org/#retarget" target="_blank">WHATWG DOM <code>retarget()</code></a>:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Composed Clicks Exit</h3>
+            <p>
+              UI events (<code>click</code>, <code>pointerdown</code>, <code>keydown</code>) have <code>composed: true</code> and bubble out to <code>window</code> across both <code>open</code> and <code>closed</code> shadow roots.
+            </p>
+            <div class="formula-pill">window.addEventListener('click') fires</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3><code>event.target</code> Retargets</h3>
+            <p>
+              An inner click on <code>&lt;button#secret-btn&gt;</code> is automatically rewritten at the shadow boundary to the outermost light-DOM <strong>Shadow Host</strong>.
+            </p>
+            <div class="formula-pill">event.target → &lt;closed-demo-button&gt;</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Internal Hover Stops</h3>
+            <p>
+              When sliding between two pills inside the <em>same</em> shadow root, <code>retarget(target) == retarget(relatedTarget)</code>, so <code>mouseover</code> stops at the <code>ShadowRoot</code>.
+            </p>
+            <div class="formula-pill">Internal A ↔ B hover stays private</div>
+          </div>
+        </div>
+
+        <div class="demo-launch-card">
+          <div class="demo-launch-info">
+            <div class="demo-launch-title">
+              <span class="status-badge status-info">Interactive Demo 1</span>
+              DOM Events, <code>event.target</code> Retargeting &amp; <code>composedPath()</code>
+            </div>
+            <div class="demo-launch-desc">
+              Test clicking <code>open</code> vs. <code>closed</code> shadow buttons and sliding between internal hover pills (uses zero Performance APIs).
+            </div>
+          </div>
+          <a class="demo-launch-btn" href="demos/demo-1-events.html?mode=platform" target="_blank">
+            ▶ Launch Demo 1 in New Tab ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Platform Demo 2 (Geometry, Hit-Testing & Shifts) -->
+    <section class="slide" data-slide-index="3" data-part="1">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 2 of 3</div>
+        <h2>Hit-Testing &amp; Layout Treat the Shadow Host as a Public Box</h2>
+        <p class="slide-lead">
+          Even inside a <code>closed</code> Shadow Root, rendered coordinates participate in document hit-testing—and retarget to the <strong>Shadow Host</strong>:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Host Box Is Observable</h3>
+            <p>
+              When content inside a <code>closed</code> shadow root expands the component, light-DOM <code>getBoundingClientRect()</code> and <code>ResizeObserver</code> measure the exact pixel delta.
+            </p>
+            <div class="formula-pill">host.getBoundingClientRect()</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3><code>elementFromPoint(x, y)</code> Retargets</h3>
+            <p>
+              Even inside a <strong>fixed-size</strong> closed shadow root, hit-testing any screen coordinate <code>(x, y)</code> returns the <strong>Shadow Host</strong>—treating the inner tree as a black box.
+            </p>
+            <div class="formula-pill">elementFromPoint(x, y) → &lt;my-closed-hero&gt;</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Black Box = Encapsulation</h3>
+            <p>
+              Attributing a screen region or layout shift to the <strong>Shadow Host</strong> tells the page owner <em>which component</em> was involved without revealing <em>which inner child</em> caused it.
+            </p>
+            <div class="formula-pill">Component attribution ≠ inner DOM leak</div>
+          </div>
+        </div>
+
+        <div class="demo-launch-card">
+          <div class="demo-launch-info">
+            <div class="demo-launch-title">
+              <span class="status-badge status-info">Interactive Demo 2</span>
+              Box Geometry, Fixed-Box Shifts &amp; <code>document.elementFromPoint(x, y)</code>
+            </div>
+            <div class="demo-launch-desc">
+              Trigger an async shift inside a <code>closed</code> Shadow Root and see how <code>getBoundingClientRect()</code> and <code>elementFromPoint()</code> attribute it to the Host.
+            </div>
+          </div>
+          <a class="demo-launch-btn" href="demos/demo-2-geometry-cls.html?mode=platform" target="_blank">
+            ▶ Launch Demo 2 in New Tab ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Platform Demo 3 (Subresource Load & window.onload) -->
+    <section class="slide" data-slide-index="4" data-part="1">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 2 · Pure Web Platform Proof (Zero Performance APIs) · 3 of 3</div>
+        <h2>Slow Subresources Inside Shadow DOM Delay <code>window.onload</code></h2>
+        <p class="slide-lead">
+          Even when an <code>&lt;img&gt;</code> is encapsulated inside an <code>open</code> or <code>closed</code> Shadow Root, its network loading participates in the outer document's lifecycle:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3><code>DOMContentLoaded</code> Fires Early</h3>
+            <p>
+              The outer HTML parser finishes immediately (`~15ms`), while slow-loading <code>&lt;img&gt;</code> elements inside the <code>open</code> and <code>closed</code> Shadow Roots continue fetching.
+            </p>
+            <div class="formula-pill">document.readyState === "interactive"</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Delays Outer <code>window.onload</code></h3>
+            <p>
+              Per <a href="https://html.spec.whatwg.org/multipage/images.html#delay-the-load-event" target="_blank">WHATWG HTML</a>, both <code>open</code> (`1.2s`) and <code>closed</code> (`2.4s`) shadow images delay the outer document's <code>window.onload</code> until the slowest one completes.
+            </p>
+            <div class="formula-pill">window.onload waits for closed shadow &lt;img&gt;</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Timing ≠ Inner DOM Leak</h3>
+            <p>
+              The outer page observes <em>when</em> the component's subresources finish loading, without gaining a reference to the inner <code>&lt;img&gt;</code> node itself.
+            </p>
+            <div class="formula-pill">Shared page lifecycle · Encapsulated node</div>
+          </div>
+        </div>
+
+        <div class="demo-launch-card">
+          <div class="demo-launch-info">
+            <div class="demo-launch-title">
+              <span class="status-badge status-info">Interactive Demo 3</span>
+              Slow-Loading <code>open</code> &amp; <code>closed</code> Shadow DOM Cards &amp; <code>window.onload</code>
+            </div>
+            <div class="demo-launch-desc">
+              Watch a <code>1.2s</code> open shadow image and a <code>2.4s</code> closed shadow image hold back the outer document's <code>window.onload</code> event.
+            </div>
+          </div>
+          <a class="demo-launch-btn" href="demos/demo-4-paint-visibility.html?mode=platform" target="_blank">
+            ▶ Launch Demo 3 in New Tab ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PART 3: SHADOW DOM MODEL
+         ========================================================= -->
+
+    <!-- SLIDE 6: Visual Architecture Diagram (Modern MDN shadowdom.svg) -->
+    <section class="slide" data-slide-index="5" data-part="2">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 3 · Shadow DOM Model</div>
+        <h2>The "Tree of Trees" vs. The "Flattened Tree"</h2>
+        <p class="slide-lead">
+          DOM APIs see separate trees divided by the <strong>Shadow Boundary</strong>, while layout, paint, and input operate on the unified <strong>Flattened Tree</strong> (<a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" target="_blank">MDN</a> · <a href="https://drafts.csswg.org/css-scoping/#flat-tree" target="_blank">CSS Scoping §3.1</a>).
+        </p>
+
+        <div class="card" style="padding: 18px 22px; align-items: center;">
+          <svg viewBox="0 0 980 390" style="width: 100%; max-height: 52vh; height: auto; display: block; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;" role="img" aria-label="Diagram comparing the DOM Tree of Trees on the left with the Flattened Tree for rendering on the right">
+            <defs>
+              <marker id="arrow-slate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b"/>
+              </marker>
+              <marker id="arrow-indigo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 8 5 L 0 9 z" fill="#4f46e5"/>
+              </marker>
+              <marker id="arrow-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 8 5 L 0 9 z" fill="#059669"/>
+              </marker>
+            </defs>
+
+            <!-- =====================================================
+                 LEFT SIDE: DOM REALM ("TREE OF TREES")
+                 ===================================================== -->
+            <rect x="10" y="10" width="465" height="370" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+            <text x="28" y="36" font-size="13" font-weight="800" fill="#0f172a" letter-spacing="0.03em">1. DOM REALM — "TREE OF TREES"</text>
+            <text x="28" y="54" font-size="11.5" fill="#64748b">DOM traversal (querySelector, parentNode) stops at the Shadow Boundary</text>
+
+            <!-- Document Tree sub-box -->
+            <rect x="24" y="68" width="200" height="258" rx="10" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.25"/>
+            <text x="36" y="88" font-size="11" font-weight="700" fill="#475569">Document Tree</text>
+
+            <!-- Edges in Document Tree -->
+            <line x1="124" y1="128" x2="76" y2="176" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="124" y1="128" x2="172" y2="176" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="76" y1="208" x2="76" y2="254" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- document node -->
+            <rect x="78" y="98" width="92" height="32" rx="16" fill="#1e40af" stroke="#1e3a8a" stroke-width="1.5"/>
+            <text x="124" y="118" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">document</text>
+
+            <!-- light DOM child 1 -->
+            <rect x="36" y="176" width="80" height="32" rx="16" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+            <text x="76" y="196" text-anchor="middle" font-size="11.5" font-weight="700" fill="#065f46">&lt;header&gt;</text>
+
+            <!-- light DOM grandchild -->
+            <rect x="36" y="254" width="80" height="32" rx="16" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+            <text x="76" y="274" text-anchor="middle" font-size="11.5" font-weight="700" fill="#065f46">&lt;h1&gt;</text>
+
+            <!-- shadow host node -->
+            <rect x="128" y="172" width="88" height="40" rx="20" fill="#10b981" stroke="#047857" stroke-width="2"/>
+            <text x="172" y="189" text-anchor="middle" font-size="11" font-weight="800" fill="#ffffff">shadow</text>
+            <text x="172" y="203" text-anchor="middle" font-size="11" font-weight="800" fill="#ffffff">host</text>
+
+            <!-- SHADOW BOUNDARY (Vertical Dashed Line) -->
+            <line x1="242" y1="68" x2="242" y2="326" stroke="#4f46e5" stroke-width="2" stroke-dasharray="5,5"/>
+            <rect x="193" y="302" width="98" height="20" rx="5" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1"/>
+            <text x="242" y="315" text-anchor="middle" font-size="10" font-weight="800" fill="#4338ca">Shadow Boundary</text>
+
+            <!-- Shadow Tree sub-box -->
+            <rect x="260" y="112" width="200" height="214" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.25"/>
+            <text x="272" y="132" font-size="11" font-weight="700" fill="#5b21b6">Shadow Tree</text>
+
+            <!-- Host -> Shadow Root capability pointer -->
+            <path d="M 216 192 L 308 168" fill="none" stroke="#4f46e5" stroke-width="2" stroke-dasharray="4,3" marker-end="url(#arrow-indigo)"/>
+
+            <!-- Edges in Shadow Tree -->
+            <line x1="360" y1="180" x2="314" y2="222" stroke="#a78bfa" stroke-width="2"/>
+            <line x1="360" y1="180" x2="406" y2="222" stroke="#a78bfa" stroke-width="2"/>
+            <line x1="406" y1="254" x2="406" y2="282" stroke="#a78bfa" stroke-width="2"/>
+
+            <!-- shadow root node -->
+            <rect x="310" y="144" width="100" height="36" rx="18" fill="#4338ca" stroke="#312e81" stroke-width="1.5"/>
+            <text x="360" y="160" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">shadow</text>
+            <text x="360" y="173" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">root</text>
+
+            <!-- shadow child 1 -->
+            <rect x="274" y="222" width="80" height="32" rx="16" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="314" y="242" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;div.card&gt;</text>
+
+            <!-- shadow child 2 -->
+            <rect x="366" y="222" width="80" height="32" rx="16" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="406" y="242" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;p&gt;</text>
+
+            <!-- shadow grandchild -->
+            <rect x="366" y="280" width="80" height="32" rx="16" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="406" y="300" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;img&gt;</text>
+
+            <!-- Bottom caption pill Left -->
+            <rect x="24" y="338" width="436" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="242" y="356" text-anchor="middle" font-size="11" font-weight="600" fill="#334155" font-family="'JetBrains Mono', monospace">shadowRoot.parentNode === null · doc.querySelector('img') === null</text>
+
+            <!-- =====================================================
+                 CENTER BRIDGE: FLATTEN & RETARGET
+                 ===================================================== -->
+            <rect x="485" y="148" width="80" height="52" rx="8" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.25"/>
+            <text x="525" y="168" text-anchor="middle" font-size="10.5" font-weight="800" fill="#3730a3">Flatten</text>
+            <path d="M 497 182 L 551 182" fill="none" stroke="#4f46e5" stroke-width="2.2" marker-end="url(#arrow-indigo)"/>
+            <text x="525" y="194" text-anchor="middle" font-size="9" font-weight="600" fill="#4f46e5">CSS §3.1</text>
+
+            <!-- =====================================================
+                 RIGHT SIDE: RENDERING REALM ("FLATTENED TREE")
+                 ===================================================== -->
+            <rect x="575" y="10" width="395" height="370" rx="14" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+            <text x="593" y="36" font-size="13" font-weight="800" fill="#064e3b" letter-spacing="0.03em">2. FLATTENED TREE (FOR RENDERING)</text>
+            <text x="593" y="54" font-size="11.5" fill="#047857">Layout, Paint, Hit-Testing &amp; WebPerf run on this single unified tree</text>
+
+            <!-- Unified Flat Tree box -->
+            <rect x="591" y="68" width="363" height="258" rx="10" fill="#ffffff" stroke="#bbf7d0" stroke-width="1.25"/>
+
+            <!-- Edges in Flattened Tree -->
+            <line x1="728" y1="126" x2="652" y2="172" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="728" y1="126" x2="804" y2="172" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="652" y1="204" x2="652" y2="250" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- Grafted Shadow Tree edges directly under shadow host! -->
+            <line x1="804" y1="208" x2="754" y2="236" stroke="#ec4899" stroke-width="2"/>
+            <line x1="804" y1="208" x2="854" y2="236" stroke="#ec4899" stroke-width="2"/>
+            <line x1="854" y1="266" x2="854" y2="284" stroke="#ec4899" stroke-width="2"/>
+
+            <!-- document node -->
+            <rect x="682" y="94" width="92" height="32" rx="16" fill="#1e40af" stroke="#1e3a8a" stroke-width="1.5"/>
+            <text x="728" y="114" text-anchor="middle" font-size="12" font-weight="700" fill="#ffffff">document</text>
+
+            <!-- light DOM child 1 -->
+            <rect x="612" y="172" width="80" height="32" rx="16" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+            <text x="652" y="192" text-anchor="middle" font-size="11.5" font-weight="700" fill="#065f46">&lt;header&gt;</text>
+
+            <!-- light DOM grandchild -->
+            <rect x="612" y="250" width="80" height="32" rx="16" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+            <text x="652" y="270" text-anchor="middle" font-size="11.5" font-weight="700" fill="#065f46">&lt;h1&gt;</text>
+
+            <!-- shadow host node in flat tree -->
+            <rect x="760" y="168" width="88" height="40" rx="20" fill="#10b981" stroke="#047857" stroke-width="2"/>
+            <text x="804" y="185" text-anchor="middle" font-size="11" font-weight="800" fill="#ffffff">shadow</text>
+            <text x="804" y="199" text-anchor="middle" font-size="11" font-weight="800" fill="#ffffff">host</text>
+
+            <!-- Dashed box showing Grafted Shadow Tree inside Flat Tree -->
+            <rect x="704" y="220" width="238" height="100" rx="8" fill="#fdf2f8" fill-opacity="0.55" stroke="#ec4899" stroke-width="1.5" stroke-dasharray="5,4"/>
+            <text x="714" y="312" font-size="10" font-weight="700" fill="#9d174d">Shadow Tree (grafted under host)</text>
+
+            <!-- grafted shadow child 1 -->
+            <rect x="714" y="234" width="80" height="30" rx="15" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="754" y="253" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;div.card&gt;</text>
+
+            <!-- grafted shadow child 2 -->
+            <rect x="814" y="234" width="80" height="30" rx="15" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="854" y="253" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;p&gt;</text>
+
+            <!-- grafted shadow grandchild -->
+            <rect x="814" y="282" width="80" height="30" rx="15" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+            <text x="854" y="301" text-anchor="middle" font-size="11" font-weight="700" fill="#9d174d">&lt;img&gt;</text>
+
+            <!-- Retarget curve from inner <img> up to shadow host -->
+            <path d="M 896 297 C 942 285, 942 195, 852 186" fill="none" stroke="#059669" stroke-width="2.2" stroke-dasharray="4,3" marker-end="url(#arrow-emerald)"/>
+            <rect x="875" y="142" width="72" height="20" rx="5" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+            <text x="911" y="155" text-anchor="middle" font-size="9.5" font-weight="800" fill="#065f46" font-family="'JetBrains Mono', monospace">retarget()</text>
+
+            <!-- Bottom caption pill Right -->
+            <rect x="591" y="338" width="363" height="28" rx="6" fill="#dcfce7" stroke="#86efac" stroke-width="1"/>
+            <text x="772" y="356" text-anchor="middle" font-size="11" font-weight="600" fill="#065f46" font-family="'JetBrains Mono', monospace">shadow root disappears · children render under host</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Two Realms & MDN Principle -->
+    <section class="slide" data-slide-index="6" data-part="2">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 3 · Shadow DOM Model</div>
+        <h2>What Shadow DOM Encapsulates—And Why</h2>
+        <p class="slide-lead">
+          Per <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM" target="_blank">MDN</a>, Shadow DOM exists so <em>"code running in the page cannot accidentally break a custom element by modifying its internal implementation."</em>
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="status-badge status-info" style="align-self:flex-start;">1. Encapsulated DOM Tree</span>
+            <h3>No Live Inner <code>Node</code> Leaks</h3>
+            <p>
+              <code>querySelector</code> and CSS don't cross into a <code>ShadowRoot</code>. Likewise, global APIs must not return live inner <code>Element</code> references (which let page code mutate internals or call <code>el.getRootNode()</code> on a <code>closed</code> root).
+            </p>
+            <div class="formula-pill">Protect internal DOM from page mutation</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-pass" style="align-self:flex-start;">2. Shared Flat Tree (<a href="https://drafts.csswg.org/css-scoping/#flat-tree" target="_blank">CSS §3.1</a>)</span>
+            <h3>Rendering Is Never Hidden</h3>
+            <p>
+              Layout, geometry, paint, and hit-testing all operate on the single document-wide <strong>flat tree</strong>. Measuring <em>when</em> or <em>how much</em> pixels painted cannot break a component's implementation.
+            </p>
+            <div class="formula-pill">Layout, paint &amp; input are page-wide</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-pass" style="align-self:flex-start;">3. The Safe Boundary</span>
+            <h3>Retarget to the Shadow Host</h3>
+            <p>
+              When the platform reports a flat-tree event or paint to the page, it retargets attribution to <code>&lt;my-component&gt;</code>—a light-DOM element the page <em>already</em> owns.
+            </p>
+            <div class="formula-pill">innerNode → retarget() → &lt;my-component&gt;</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: Three Modes (open, closed, UA) -->
+    <section class="slide" data-slide-index="7" data-part="2">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 3 · Shadow DOM Model</div>
+        <h2><code>open</code> and <code>closed</code> Behave Identically by Default</h2>
+        <p class="slide-lead">
+          Across WHATWG DOM and HTML, <code>mode</code> is only checked in <strong>4 legacy APIs from 2015</strong>. All modern APIs treat <code>open</code> and <code>closed</code> the same.
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Author <code>open</code> &amp; <code>closed</code></h3>
+            <p>
+              Both encapsulate their inner DOM tree by default. The only difference is whether <code>host.shadowRoot</code> hands out a capability reference.
+            </p>
+            <div class="formula-pill">Default rule: open == closed</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>The Only 4 Exceptions (2015)</h3>
+            <p>
+              1. <code>host.shadowRoot</code><br>
+              2. <code>node.assignedSlot</code><br>
+              3. <code>slot.assignedNodes({flatten:true})</code><br>
+              4. <code>event.composedPath()</code>
+            </p>
+            <div class="formula-pill">No newer spec checks mode == "open"</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>User-Agent (<code>UA</code>) Shadow Roots</h3>
+            <p>
+              Internal browser implementation of native controls (<code>&lt;video controls&gt;</code>, <code>&lt;input type="range"&gt;</code>). Not author DOM.
+            </p>
+            <div class="formula-pill">Exclude UA internals from WebPerf</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PART 4: WEBPERF GAPS & DEMOS
+         ========================================================= -->
+
+    <!-- SLIDE 8: Two Audiences & Three Core Principles for WebPerf -->
+    <section class="slide" data-slide-index="7" data-part="3">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 4 · Expanding to Web Performance APIs</div>
+        <h2>Two Audiences for Web Components (<a href="https://github.com/w3c/element-timing/issues/3" target="_blank"><code>element-timing#3</code></a>)</h2>
+        <p class="slide-lead">
+          Distinguishing <strong>Component Users</strong> from <strong>Component Authors</strong> explains both what is shown by default and what requires opt-in:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Component Users (Default)</h3>
+            <p>
+              Page owners want timings for <strong>the component in its entirety</strong> (retargeted to <code>&lt;my-host&gt;</code>), <strong>plus sub-elements they pass via <code>&lt;slot&gt;</code></strong> (which <code>retarget()</code> preserves automatically!).
+            </p>
+            <div class="formula-pill">Default: Host + Slotted Light DOM</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Component Authors (Opt-In)</h3>
+            <p>
+              Widget authors hold the <code>ShadowRoot</code> reference and want <strong>inner node attribution</strong> <em>plus</em> <strong>entries filtered from the main timeline</strong> (e.g., internal <code>elementtiming</code> / <code>containertiming</code> &amp; confined events).
+            </p>
+            <div class="formula-pill">Opt-in: Inner nodes + filtered entries</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Browser Internals (<code>UA</code>)</h3>
+            <p>
+              Neither audience owns internal browser implementation of native controls (<code>&lt;video controls&gt;</code>). Treat <code>open == closed</code>, and exclude <strong>UA</strong> shadow trees.
+            </p>
+            <div class="formula-pill">open == closed · Exclude UA trees</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: Current State Scorecard -->
+    <section class="slide" data-slide-index="8" data-part="3">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 4 · Expanding to Web Performance APIs</div>
+        <h2>Scorecard: How Do WebPerf Specs Compare Today?</h2>
+
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead>
+              <tr>
+                <th>WebPerf API</th>
+                <th>Measures Shadow DOM?</th>
+                <th>Component User View (Default)</th>
+                <th>What Needs to Change</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Event Timing (INP)</strong></td>
+                <td><span class="status-badge status-pass">Yes (All Browsers)</span></td>
+                <td><span class="status-badge status-pass">Retargets to Host ✅</span></td>
+                <td>Decide whether <code>targetSelector</code> (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>) pierces <code>open</code> roots like <code>composedPath()</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>Layout Instability (CLS)</strong></td>
+                <td><span class="status-badge status-pass">Yes (Chromium)</span></td>
+                <td><span class="status-badge status-warn"><code>node: null</code> ⚠️</span></td>
+                <td>Retarget <code>sources[i].node</code> to the Shadow Host (and keep slotted nodes) instead of <code>null</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>Paint Timing &amp; LCP</strong></td>
+                <td><span class="status-badge status-fail">Chrome/FF Yes · Safari No</span></td>
+                <td><span class="status-badge status-fail"><code>element: null</code> / Leaks ❌</span></td>
+                <td>Include shadow trees in spec; retarget <code>element</code> to Host; clear inner <code>url</code>; cap inline text.</td>
+              </tr>
+              <tr>
+                <td><strong>Long Animation Frames</strong></td>
+                <td><span class="status-badge status-pass">Yes (Frame Timing)</span></td>
+                <td><span class="status-badge status-fail">Leaks inner <code>#id</code> ❌</span></td>
+                <td>Retarget <code>event.currentTarget</code> before serializing <code>script.invoker</code>.</td>
+              </tr>
+              <tr>
+                <td><strong>Container &amp; Element Timing</strong></td>
+                <td><span class="status-badge status-info">Filtered from Main Timeline</span></td>
+                <td><span class="status-badge status-info">Not emitted inside Shadow</span></td>
+                <td>Retarget shadow paints to outer container host; let Component Authors opt in to filtered inner entries.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: WebPerf Demo (Event Timing vs CLS on the Same Components) -->
+    <section class="slide" data-slide-index="9" data-part="3">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 4 · Web Performance Demos · Same Components + PerformanceObserver</div>
+        <h2>Event Timing Retargets to Host—While CLS Drops <code>node</code> to <code>null</code></h2>
+        <p class="slide-lead">
+          Running <code>PerformanceObserver</code> on the exact same components from Demos 1 &amp; 2 shows the inconsistency:
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <span class="status-badge status-pass" style="align-self:flex-start;">PerformanceEventTiming (INP)</span>
+            <h3>Retargets <code>entry.target</code> to Host ✅</h3>
+            <ul>
+              <li>Clicking <code>open</code> or <code>closed</code> shadow buttons sets <code>entry.target</code> to <code>&lt;open-demo-button&gt;</code> / <code>&lt;closed-demo-button&gt;</code>.</li>
+              <li>Internal <code>mouseover</code> between two shadow pills stops at the <code>ShadowRoot</code> and reports <code>entry.target = null</code>.</li>
+              <li><strong>Open WG Question (<a href="https://github.com/w3c/event-timing/issues/126" target="_blank">#126</a>):</strong> <code>targetSelector</code> is modeled on <code>event.composedPath()</code>—should it pierce <code>open</code> roots by default or stop at the host?</li>
+            </ul>
+            <div style="margin-top:auto; padding-top:10px;">
+              <a class="demo-launch-btn" href="demos/demo-1-events.html?mode=webperf" target="_blank">
+                ▶ Launch Event Timing Demo ↗
+              </a>
+            </div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-warn" style="align-self:flex-start;">LayoutShift (CLS)</span>
+            <h3>Exposes Rects, Drops <code>node: null</code> ⚠️</h3>
+            <ul>
+              <li><code>LayoutShift</code> already reports the exact <code>previousRect</code> and <code>currentRect</code> of the shifting shadow element!</li>
+              <li>Calling <code>document.elementFromPoint(currentRect.x, currentRect.y)</code> synchronously already returns <code>&lt;my-closed-hero&gt;</code>.</li>
+              <li>Yet <code>sources[0].node</code> returns <code>null</code> because <code>layout_shift_attribution.cc</code> checks <code>IsInShadowTree()</code> instead of <code>Retarget()</code>.</li>
+            </ul>
+            <div style="margin-top:auto; padding-top:10px;">
+              <a class="demo-launch-btn" href="demos/demo-2-geometry-cls.html?mode=webperf" target="_blank">
+                ▶ Launch CLS Attribution Demo ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: WebPerf Demo (LCP #152 Reproduction) -->
+    <section class="slide" data-slide-index="10" data-part="3">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 4 · Web Performance Demos · Reproducing w3c/largest-contentful-paint#152</div>
+        <h2>Three LCP Bugs in a Single Closed Shadow Root (<a href="https://github.com/w3c/largest-contentful-paint/issues/152" target="_blank"><code>lcp#152</code></a>)</h2>
+        <p class="slide-lead">
+          When progressive content paints inside a single <code>closed</code> custom element (<code>&lt;lcp-shadow-probe&gt;</code>), three different things go wrong today:
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="status-badge status-fail" style="align-self:flex-start;">1. Inline &lt;span&gt; (0ms)</span>
+            <h3>Leaks Past Inline Host</h3>
+            <p>
+              Because custom elements default to <code>display: inline</code>, Paint Timing text aggregation walks past the shadow boundary to the outer light-DOM <code>&lt;div#light-wrapper&gt;</code>!
+            </p>
+            <div class="formula-pill">element → &lt;div#light-wrapper&gt; (Wrong!)</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-warn" style="align-self:flex-start;">2. Block &lt;p&gt; (450ms)</span>
+            <h3>Drops Host Attribution</h3>
+            <p>
+              When a block <code>&lt;p&gt;</code> paints inside the closed shadow root, it is the new containing block—so <code>exposed for paint timing</code> returns <code>element: null</code> and <code>id: ""</code>.
+            </p>
+            <div class="formula-pill">element → null (Host lost!)</div>
+          </div>
+
+          <div class="card">
+            <span class="status-badge status-fail" style="align-self:flex-start;">3. Inner &lt;img&gt; (950ms)</span>
+            <h3>Leaks Private Image URL</h3>
+            <p>
+              When an <code>&lt;img&gt;</code> paints inside the closed shadow root, <code>entry.element</code> is <code>null</code>—but <code>entry.url</code> exposes the full private shadow image URL!
+            </p>
+            <div class="formula-pill">entry.url → "https://..." (Leaked!)</div>
+          </div>
+        </div>
+
+        <div class="demo-launch-card">
+          <div class="demo-launch-info">
+            <div class="demo-launch-title">
+              <span class="status-badge status-fail">Interactive Demo 4</span>
+              Auto-Running 3-Step Reproduction of <code>w3c/largest-contentful-paint#152</code>
+            </div>
+            <div class="demo-launch-desc">
+              Watch a single <code>closed</code> Shadow Root emit all 3 inconsistent LCP entries at 0ms, 450ms, and 950ms.
+            </div>
+          </div>
+          <a class="demo-launch-btn" href="demos/demo-3-lcp-resource.html" target="_blank">
+            ▶ Launch LCP #152 Demo in New Tab ↗
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PART 5: WG DECISIONS
+         ========================================================= -->
+
+    <!-- SLIDE 12: Core Spec Proposal (Component User Default) -->
+    <section class="slide" data-slide-index="11" data-part="4">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 5 · Core Proposal · Audience 1: Component Users (Default)</div>
+        <h2>Default View: <code>retarget for performance timing</code></h2>
+
+        <div class="algo-box">
+          <strong>Shared Algorithm: <code>retarget for performance timing(node, document, allowedScopes = « »)</code></strong>
+          <ol>
+            <li>If <em>node</em> is <code>null</code>, disconnected, or its shadow-including root is not <em>document</em>, return <code>null</code>.</li>
+            <li>If <em>node</em> is a pseudo-element, set <em>node</em> to its ultimate originating element.</li>
+            <li>If <em>node</em>'s root is a <strong>user-agent shadow root</strong>, return <code>null</code> (unless eligible via an explicit host rule like <code>&lt;input value&gt;</code>).</li>
+            <li>While <em>node</em>'s root is a <code>ShadowRoot</code> <em>root</em> not in <em>allowedScopes</em>: set <em>node</em> to <em>root</em>'s <strong>host</strong>.</li>
+            <li>Return <em>node</em>.</li>
+          </ol>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Host + <code>&lt;slot&gt;</code> Automatic!</h3>
+            <p>Inner shadow nodes retarget to <code>&lt;my-host&gt;</code> (with <code>LCP.url = ""</code>), while slotted light-DOM children (<code>getRootNode() === document</code>) return directly!</p>
+          </div>
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Cap Inline Text at Host</h3>
+            <p>Stop Paint Timing text aggregation at Shadow Host boundaries so inline custom elements never leak to <code>&lt;body&gt;</code>.</p>
+          </div>
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Deduplicate on Inner Node</h3>
+            <p>Keep LCP's "already reported" set keyed on the <em>inner</em> node so progressive paints in one host still emit.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 13: Stretch Goal (Component Author Opt-In) -->
+    <section class="slide" data-slide-index="12" data-part="4">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 5 · Stretch Goal · Audience 2: Component Authors (Opt-In)</div>
+        <h2>Component Author View: Capability Opt-In on <code>observe()</code></h2>
+        <p class="slide-lead">
+          When a Component Author holds a <code>ShadowRoot</code> reference, passing it to <code>observe()</code> unlocks <strong>both</strong> inner attribution and entries filtered from the main timeline:
+        </p>
+
+        <div class="grid-2">
+          <pre class="code-block"><code>dictionary PerformanceObserverInit {
+  DOMString type;
+  boolean buffered;
+
+  // 1. Unlocks inner attribution + shadow entries
+  //    for listed ShadowRoots (open or closed):
+  sequence&lt;ShadowRoot&gt; shadowRoots = [];
+
+  // 2. Scopes Container / Element Timing to a
+  //    subtree + authorizes its TreeScope:
+  Node root;
+};</code></pre>
+
+          <div class="card">
+            <h3>Two Things Unlocked for Component Authors</h3>
+            <ul>
+              <li><strong>1. Filtered Entries Delivered:</strong> Emits entries that are completely filtered from the main <code>Document</code> timeline—internal <code>elementtiming</code>, internal <code>containertiming</code>, and shadow-confined <code>event</code>s.</li>
+              <li><strong>2. Un-Retargeted Inner Attribution:</strong> Stops <code>retarget()</code> at <code>this.#sr</code>, exposing the inner <code>element</code> / <code>node</code>, inner <code>id</code>, and full inner <code>LCP.url</code>.</li>
+              <li><strong>Global Buffer Isolation:</strong> <code>performance.getEntriesByType()</code> stays strictly filtered &amp; retargeted to <code>Document</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 14: 4 Proposed Resolutions for WebPerf WG -->
+    <section class="slide" data-slide-index="13" data-part="4">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Part 5 · Call to Action for WebPerf WG</div>
+        <h2>4 Decisions for the Working Group</h2>
+
+        <div class="grid-4">
+          <div class="card">
+            <span class="card-num">1</span>
+            <h3>Include Author Shadow DOM; Exclude UA</h3>
+            <p>
+              Update Paint Timing &amp; LCP to traverse shadow-including descendants for <code>open</code> and <code>closed</code> roots, while excluding <strong>User-Agent</strong> shadow trees.
+            </p>
+            <div class="formula-pill">Unblocks Safari/WebKit interop (#152)</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">2</span>
+            <h3>Component User Default: Retarget to Host</h3>
+            <p>
+              Retarget <code>LCP.element</code>, <code>CLS.sources[i].node</code>, <code>LoAF.invoker</code>, and <code>ContainerTiming</code> to the Shadow Host (preserving <code>&lt;slot&gt;</code> children and clearing inner <code>LCP.url</code>).
+            </p>
+            <div class="formula-pill">Component in its entirety + slots</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">3</span>
+            <h3>Cap Inline Text &amp; Decide <code>targetSelector</code> (#126)</h3>
+            <p>
+              Stop Paint Timing text aggregation at Shadow Host boundaries. Decide if <code>EventTiming.targetSelector</code> pierces <code>open</code> roots like <code>composedPath()</code> or stops at the host.
+            </p>
+            <div class="formula-pill">Open vs. Host selector decision</div>
+          </div>
+
+          <div class="card">
+            <span class="card-num">4</span>
+            <h3>Component Author Opt-In: <code>{ shadowRoots, root }</code></h3>
+            <p>
+              Incubate <code>shadowRoots</code> &amp; <code>root</code> on <code>PerformanceObserverInit</code> to unlock inner node attribution AND shadow-filtered entries (<code>element</code>, <code>container</code>, confined <code>event</code>s).
+            </p>
+            <div class="formula-pill">Unlocks inner nodes + filtered entries</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 15: Appendix (Engine Implementation Details & WPT Plan) -->
+    <section class="slide" data-slide-index="14" data-part="4">
+      <div class="slide-body">
+        <div class="slide-eyebrow">Appendix · Reference for Implementors</div>
+        <h2>Engine Implementation Roadmap &amp; WPT Suite Plan</h2>
+
+        <div class="tab-bar" role="tablist">
+          <button class="tab-btn active" type="button" onclick="selectImplTab('blink', this)">Chromium (Blink)</button>
+          <button class="tab-btn" type="button" onclick="selectImplTab('webkit', this)">Safari (WebKit)</button>
+          <button class="tab-btn" type="button" onclick="selectImplTab('gecko', this)">Firefox (Gecko)</button>
+          <button class="tab-btn" type="button" onclick="selectImplTab('wpt', this)">Proposed WPT Tests</button>
+        </div>
+
+        <div id="impl-blink" class="impl-panel active">
+          <div class="table-wrap">
+            <table class="spec-table">
+              <thead>
+                <tr>
+                  <th>Tier</th>
+                  <th>Chromium Work Item</th>
+                  <th>Blink Source Location</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="status-badge status-fail">Tier 1: Bug Fix</span></td>
+                  <td><strong>Clear <code>image_url</code> for shadow images in LCP:</strong> Set <code>image_url = ""</code> when <code>image_node-&gt;IsInShadowTree()</code> is true.</td>
+                  <td><code>core/paint/timing/largest_contentful_paint_calculator.cc:218-235</code></td>
+                </tr>
+                <tr>
+                  <td><span class="status-badge status-fail">Tier 1: Bug Fix</span></td>
+                  <td><strong>Cap inline shadow text aggregation at Shadow Host:</strong> Stop aggregating text across an inline shadow host to <code>&lt;body&gt;</code>.</td>
+                  <td><code>core/paint/timing/text_paint_timing_detector.cc:49-96</code></td>
+                </tr>
+                <tr>
+                  <td><span class="status-badge status-warn">Tier 2: Spec + Fix</span></td>
+                  <td><strong>Retarget <code>event.currentTarget</code> in LoAF; align <code>EventPathToSelector()</code> with #126 decision; exclude <code>ShadowRoot::IsUserAgent()</code>.</strong></td>
+                  <td><code>core/timing/timing_utils.cc:41-98</code><br><code>core/paint/timing/*_paint_timing_detector.cc</code></td>
+                </tr>
+                <tr>
+                  <td><span class="status-badge status-info">Tier 3: Retarget</span></td>
+                  <td><strong>Retarget <code>LCP.element</code>, <code>CLS.node</code>, and <code>ContainerTiming.lastPaintedElement</code></strong> via <code>document.Retarget(*element)</code>.</td>
+                  <td><code>largest_contentful_paint_calculator.cc</code><br><code>layout_shift_attribution.cc</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="impl-webkit" class="impl-panel">
+          <div class="card">
+            <h3>Safari / WebKit Implementation Notes</h3>
+            <ul>
+              <li><strong>Context:</strong> Simon Fraser (<code>@smfr</code>) implemented Shadow DOM LCP in <a href="https://commits.webkit.org/310575@main" target="_blank">310575@main</a> and reverted it in <a href="https://commits.webkit.org/310655@main" target="_blank">310655@main</a> because Paint Timing's <code>#mark-paint-timing</code> iterated <code>doc's descendants</code>.</li>
+              <li><strong>Action Items:</strong> Re-land shadow-including traversal (excluding <code>UserAgent</code> shadow roots), expose retargeted light-DOM shadow host for <code>LCP.element</code> and <code>id</code> (with <code>url: ""</code>), and cap text aggregation at shadow boundaries.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="impl-gecko" class="impl-panel">
+          <div class="card">
+            <h3>Firefox / Gecko Implementation Notes</h3>
+            <ul>
+              <li><strong>Context:</strong> Gecko already includes author Shadow DOM in FCP, LCP, and Event Timing, and aligned on Host Retargeting at the May 2026 Blink/Gecko F2F (<code>@Bas-moz</code> &amp; <code>@emilio</code>).</li>
+              <li><strong>Action Items:</strong> Switch <code>LCP.element</code> and <code>id</code> from <code>null</code> / <code>""</code> to the retargeted light-DOM shadow host (clearing <code>url</code> to <code>""</code>), cap inline shadow text aggregation, and exclude UA shadow trees.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div id="impl-wpt" class="impl-panel">
+          <div class="table-wrap">
+            <table class="spec-table">
+              <thead>
+                <tr>
+                  <th>WPT Directory</th>
+                  <th>Proposed Test File &amp; Assertions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>paint-timing/</code></td>
+                  <td><code>fcp-shadow-dom-open-closed.html</code> &amp; <code>fcp-ua-shadow-excluded.html</code></td>
+                </tr>
+                <tr>
+                  <td><code>largest-contentful-paint/</code></td>
+                  <td>
+                    <code>shadow-dom-retarget-host.html</code> (host attribution + <code>url === ""</code>) ·
+                    <code>shadow-dom-inline-host-text-aggregation.html</code> ·
+                    <code>shadow-dom-multiple-candidates-same-host.html</code> ·
+                    <code>shadow-dom-ua-excluded.html</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>event-timing/</code></td>
+                  <td><code>target-selector-shadow-dom.html</code> · <code>layout-instability/shadow-dom-attribution-retarget.html</code> · <code>long-animation-frames/loaf-event-listener-shadow-dom-invoker.html</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const stepPills = Array.from(document.querySelectorAll('.step-pill'));
+    const selectEl = document.getElementById('slide-jump-select');
+    const prevBtn = document.getElementById('prev-slide-btn');
+    const nextBtn = document.getElementById('next-slide-btn');
+    const counterLabel = document.getElementById('slide-counter-label');
+    const progressFill = document.getElementById('progress-bar-fill');
+    const toggleModeBtn = document.getElementById('toggle-mode-btn');
+
+    let currentSlide = 0;
+
+    function jumpToPart(part) {
+      const idx = slides.findIndex((s) => s.getAttribute('data-part') === String(part));
+      if (idx !== -1) updateSlideView(idx);
+    }
+
+    function updateSlideView(index) {
+      currentSlide = Math.max(0, Math.min(slides.length - 1, index));
+      slides.forEach((s, i) => {
+        s.classList.toggle('active', i === currentSlide);
+      });
+      const activePart = slides[currentSlide].getAttribute('data-part');
+      stepPills.forEach((pill) => {
+        pill.classList.toggle('active', pill.getAttribute('data-part') === activePart);
+      });
+      selectEl.value = String(currentSlide);
+      counterLabel.textContent = `${currentSlide + 1} / ${slides.length}`;
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === slides.length - 1;
+      progressFill.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', () => updateSlideView(currentSlide - 1));
+    nextBtn.addEventListener('click', () => updateSlideView(currentSlide + 1));
+    selectEl.addEventListener('change', (e) => updateSlideView(Number(e.target.value)));
+
+    toggleModeBtn.addEventListener('click', () => {
+      const isDoc = document.body.classList.toggle('mode-document');
+      toggleModeBtn.textContent = isDoc ? 'Slide View' : 'All Slides';
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (document.body.classList.contains('mode-document')) return;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        updateSlideView(currentSlide + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        updateSlideView(currentSlide - 1);
+      }
+    });
+
+    function selectImplTab(engine, btnEl) {
+      const parent = btnEl.closest('.slide');
+      parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.impl-panel').forEach(p => p.classList.remove('active'));
+      btnEl.classList.add('active');
+      document.getElementById(`impl-${engine}`)?.classList.add('active');
+    }
+
+    updateSlideView(0);
+  </script>
+</body>
+</html>

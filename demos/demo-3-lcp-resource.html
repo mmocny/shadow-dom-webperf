@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo 4: LCP #152 in Closed Shadow DOM</title>
+  <style>
+    :root {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 20px; }
+    .shell {
+      max-width: 680px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    button {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .stage {
+      padding: 14px;
+      border: 1px dashed #94a3b8;
+      border-radius: 8px;
+      min-height: 90px;
+    }
+    .output {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .key { color: #64748b; }
+    .val { font-weight: 700; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <h1>LargestContentfulPaint (#152)</h1>
+      <button type="button" onclick="location.reload()">Replay</button>
+    </div>
+
+    <div class="stage" id="light-wrapper">
+      <lcp-shadow-probe id="shadow-host"></lcp-shadow-probe>
+    </div>
+
+    <div class="output">
+      <div><span class="key">entry.element:</span> <span class="val" id="v-el">—</span></div>
+      <div><span class="key">entry.url:</span> <span class="val" id="v-url">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    const vEl = document.getElementById('v-el');
+    const vUrl = document.getElementById('v-url');
+
+    let closedShadow = null;
+    customElements.define('lcp-shadow-probe', class extends HTMLElement {
+      connectedCallback() {
+        closedShadow = this.attachShadow({ mode: 'closed' });
+        const span = document.createElement('span');
+        span.textContent = '1. Inline <span> inside inline host';
+        closedShadow.appendChild(span);
+      }
+    });
+
+    if ('LargestContentfulPaint' in window) {
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          console.log('[LargestContentfulPaint]', entry);
+          vEl.textContent = entry.element ? `<${entry.element.tagName.toLowerCase()}#${entry.element.id}>` : 'null';
+          vUrl.textContent = entry.url ? `"${entry.url.slice(0, 36)}..."` : '""';
+        }
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+    }
+
+    setTimeout(() => {
+      if (!closedShadow) return;
+      const p = document.createElement('p');
+      p.style.cssText = 'font-size:16px;font-weight:700;margin:6px 0;';
+      p.textContent = '2. Larger block <p> inside closed ShadowRoot';
+      closedShadow.appendChild(p);
+    }, 600);
+
+    setTimeout(() => {
+      if (!closedShadow) return;
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="40"><rect width="100%" height="100%" rx="6" fill="#1e3a8a"/><text x="12" y="25" fill="#fff" font-family="sans-serif" font-size="13" font-weight="bold">3. <img> inside closed ShadowRoot</text></svg>';
+      const img = document.createElement('img');
+      img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+      img.width = 480;
+      img.height = 40;
+      closedShadow.appendChild(img);
+    }, 1200);
+  </script>
+</body>
+</html>

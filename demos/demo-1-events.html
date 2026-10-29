@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo 1: Shadow DOM Events</title>
+  <style>
+    :root {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 40px 20px; }
+    .shell {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    .mode-switch { display: flex; gap: 6px; }
+    .mode-link {
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+    }
+    .mode-link.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .output {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+    .key { color: #64748b; }
+    .val { font-weight: 700; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <h1 id="demo-title">Demo 1: DOM Events</h1>
+      <div class="mode-switch">
+        <a class="mode-link" id="link-platform" href="?mode=platform">DOM Events</a>
+        <a class="mode-link" id="link-webperf" href="?mode=webperf">Event Timing</a>
+      </div>
+    </div>
+
+    <div class="controls">
+      <open-demo-card id="open-host"></open-demo-card>
+      <closed-demo-card id="closed-host"></closed-demo-card>
+    </div>
+
+    <div class="output">
+      <div><span class="key" id="k1">event.target:</span> <span class="val" id="v1">—</span></div>
+      <div><span class="key" id="k2">event.composedPath()[0]:</span> <span class="val" id="v2">—</span></div>
+    </div>
+  </div>
+
+  <script>
+    const isPlatformOnly = new URLSearchParams(location.search).get('mode') === 'platform';
+    document.getElementById(isPlatformOnly ? 'link-platform' : 'link-webperf').classList.add('active');
+
+    const k1 = document.getElementById('k1');
+    const v1 = document.getElementById('v1');
+    const k2 = document.getElementById('k2');
+    const v2 = document.getElementById('v2');
+
+    if (!isPlatformOnly) {
+      document.getElementById('demo-title').textContent = 'Demo 1: PerformanceEventTiming';
+      k1.textContent = 'entry.target:';
+      k2.textContent = 'entry.targetSelector:';
+    }
+
+    function blockMainThread(ms) {
+      const start = performance.now();
+      while (performance.now() - start < ms) {}
+    }
+
+    function formatNode(node) {
+      if (!node) return 'null';
+      const tag = node.tagName ? node.tagName.toLowerCase() : node.nodeName;
+      const id = node.id ? `#${node.id}` : '';
+      return `<${tag}${id}>`;
+    }
+
+    function buildShadowWidget(sr, modeLabel, accentColor) {
+      const style = document.createElement('style');
+      style.textContent = `
+        :host {
+          display: block;
+          border: 1.5px dashed ${accentColor};
+          border-radius: 10px;
+          padding: 12px 14px;
+          background: #f8fafc;
+        }
+        .title {
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+          margin-bottom: 10px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .row {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        button {
+          background: ${accentColor};
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          padding: 7px 12px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        button.secondary {
+          background: #ffffff;
+          color: #0f172a;
+          border: 1px solid #cbd5e1;
+        }
+        .chip {
+          font-size: 12px;
+          font-weight: 600;
+          padding: 5px 9px;
+          border-radius: 999px;
+          background: #e2e8f0;
+          color: #334155;
+          cursor: pointer;
+          user-select: none;
+        }
+      `;
+
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = modeLabel;
+
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.id = 'save-btn';
+      saveBtn.type = 'button';
+      saveBtn.textContent = 'Save';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.id = 'cancel-btn';
+      cancelBtn.className = 'secondary';
+      cancelBtn.type = 'button';
+      cancelBtn.textContent = 'Cancel';
+
+      const chip = document.createElement('span');
+      chip.id = 'info-chip';
+      chip.className = 'chip';
+      chip.textContent = 'Badge';
+
+      row.addEventListener('click', () => {
+        if (!isPlatformOnly) blockMainThread(56);
+      });
+
+      row.append(saveBtn, cancelBtn, chip);
+      sr.append(style, title, row);
+    }
+
+    customElements.define('open-demo-card', class extends HTMLElement {
+      connectedCallback() {
+        const sr = this.attachShadow({ mode: 'open' });
+        buildShadowWidget(sr, '<open-demo-card#open-host> (open)', '#2563eb');
+      }
+    });
+
+    customElements.define('closed-demo-card', class extends HTMLElement {
+      connectedCallback() {
+        const sr = this.attachShadow({ mode: 'closed' });
+        buildShadowWidget(sr, '<closed-demo-card#closed-host> (closed)', '#0f766e');
+      }
+    });
+
+    window.addEventListener('click', (e) => {
+      console.log('[window click]', { target: e.target, composedTarget: e.composedPath()[0], event: e });
+      if (isPlatformOnly) {
+        v1.textContent = formatNode(e.target);
+        v2.textContent = formatNode(e.composedPath()[0]);
+      }
+    });
+
+    if (!isPlatformOnly && 'PerformanceEventTiming' in window) {
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          if (entry.name !== 'click') continue;
+          console.log('[PerformanceEventTiming]', entry);
+          v1.textContent = formatNode(entry.target);
+          v2.textContent = 'targetSelector' in entry ? JSON.stringify(entry.targetSelector) : '(not enabled)';
+        }
+      }).observe({ type: 'event', durationThreshold: 16, buffered: true });
+    }
+  </script>
+</body>
+</html>
