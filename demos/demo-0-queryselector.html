@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Demo 0: What Is Shadow DOM? (querySelector Guard)</title>
+  <style>
+    :root {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px 16px; }
+    .shell {
+      max-width: 880px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px 28px;
+      display: grid;
+      gap: 18px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+    h1 { margin: 0; font-size: 18px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    light-demo-card {
+      display: block;
+      border: 1.5px dashed #475569;
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #f8fafc;
+    }
+    light-demo-card .title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    light-demo-card .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    light-demo-card button {
+      background: #334155;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    light-demo-card button.secondary {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+    }
+    .matched,
+    .matched-host {
+      outline: 3px solid #f59e0b;
+      outline-offset: 2px;
+    }
+    .actions {
+      display: grid;
+      gap: 8px;
+    }
+    .q-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+    }
+    .q-pill:hover {
+      border-color: #94a3b8;
+      background: #f1f5f9;
+    }
+    .q-pill.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+    .q-desc {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      line-height: 1.8;
+    }
+    .key { color: #64748b; }
+    .val { font-weight: 700; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <h1>Demo 0: Shadow DOM &amp; querySelectorAll()</h1>
+    </div>
+
+    <div class="controls">
+      <light-demo-card></light-demo-card>
+      <open-demo-card></open-demo-card>
+      <closed-demo-card></closed-demo-card>
+    </div>
+
+    <div class="actions">
+      <div class="q-pill" data-action="doc-buttons">
+        <span>1. document.querySelectorAll('button')</span>
+        <span class="q-desc">Only finds Light DOM buttons</span>
+      </div>
+      <div class="q-pill" data-action="shadow-buttons">
+        <span>2. host.shadowRoot?.querySelectorAll('button')</span>
+        <span class="q-desc">Reaches into open shadowRoot only</span>
+      </div>
+      <div class="q-pill" data-action="doc-hosts">
+        <span>3. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')</span>
+        <span class="q-desc">Selects all 3 host elements</span>
+      </div>
+    </div>
+
+    <div class="output" id="output-box">
+      <div><span class="key" id="k-1">Click an action above to run query...</span> <span class="val" id="v-1"></span></div>
+      <div id="row-2" style="display:none;"><span class="key" id="k-2"></span> <span class="val" id="v-2"></span></div>
+    </div>
+  </div>
+
+  <script>
+    const openRoots = [];
+
+    function formatNode(node) {
+      const tag = node.tagName ? node.tagName.toLowerCase() : node.nodeName;
+      const id = node.id ? `#${node.id}` : '';
+      return `<${tag}${id}>`;
+    }
+
+    function formatNodeList(list) {
+      if (list === undefined) return 'undefined (shadowRoot is null)';
+      const nodes = Array.from(list);
+      if (nodes.length === 0) return '[] (0 matches)';
+      return `[${nodes.map(formatNode).join(', ')}]`;
+    }
+
+    function appendCardButtons(root, modeLabel) {
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = modeLabel;
+
+      const row = document.createElement('div');
+      row.className = 'row';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.id = 'save-btn';
+      saveBtn.type = 'button';
+      saveBtn.textContent = '<button id="save-btn">';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.id = 'cancel-btn';
+      cancelBtn.className = 'secondary';
+      cancelBtn.type = 'button';
+      cancelBtn.textContent = '<button id="cancel-btn">';
+
+      row.append(saveBtn, cancelBtn);
+      root.append(title, row);
+    }
+
+    function buildShadowWidget(sr, modeLabel, accentColor) {
+      const style = document.createElement('style');
+      style.textContent = `
+        :host {
+          display: block;
+          border: 1.5px dashed ${accentColor};
+          border-radius: 10px;
+          padding: 12px 14px;
+          background: #f8fafc;
+        }
+        .title {
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+          margin-bottom: 10px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        .row {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        button {
+          background: ${accentColor};
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          padding: 7px 11px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        button.secondary {
+          background: #ffffff;
+          color: #0f172a;
+          border: 1px solid #cbd5e1;
+        }
+        button.matched {
+          outline: 3px solid #f59e0b;
+          outline-offset: 2px;
+        }
+      `;
+      sr.append(style);
+      appendCardButtons(sr, modeLabel);
+    }
+
+    customElements.define('light-demo-card', class extends HTMLElement {
+      connectedCallback() {
+        appendCardButtons(this, '<light-demo-card> (no shadow)');
+      }
+    });
+
+    customElements.define('open-demo-card', class extends HTMLElement {
+      connectedCallback() {
+        const sr = this.attachShadow({ mode: 'open' });
+        openRoots.push(sr);
+        buildShadowWidget(sr, '<open-demo-card> (open)', '#2563eb');
+      }
+    });
+
+    customElements.define('closed-demo-card', class extends HTMLElement {
+      connectedCallback() {
+        const sr = this.attachShadow({ mode: 'closed' });
+        buildShadowWidget(sr, '<closed-demo-card> (closed)', '#0f766e');
+      }
+    });
+
+    function clearHighlights() {
+      document.querySelectorAll('.matched, .matched-host').forEach(el => {
+        el.classList.remove('matched', 'matched-host');
+      });
+      openRoots.forEach(sr => sr.querySelectorAll('.matched').forEach(el => el.classList.remove('matched')));
+    }
+
+    function runAction(action) {
+      const openHost = document.querySelector('open-demo-card');
+      const closedHost = document.querySelector('closed-demo-card');
+      const k1 = document.getElementById('k-1');
+      const v1 = document.getElementById('v-1');
+      const row2 = document.getElementById('row-2');
+      const k2 = document.getElementById('k-2');
+      const v2 = document.getElementById('v-2');
+
+      clearHighlights();
+
+      if (action === 'doc-buttons') {
+        const matches = document.querySelectorAll('button');
+        matches.forEach(el => el.classList.add('matched'));
+        k1.textContent = "document.querySelectorAll('button'):";
+        v1.textContent = formatNodeList(matches);
+        row2.style.display = 'none';
+        console.log("[1. document.querySelectorAll('button')]", Array.from(matches));
+      } else if (action === 'shadow-buttons') {
+        const openMatches = openHost.shadowRoot?.querySelectorAll('button');
+        const closedMatches = closedHost.shadowRoot?.querySelectorAll('button');
+        openMatches?.forEach(el => el.classList.add('matched'));
+
+        k1.textContent = "openHost.shadowRoot?.querySelectorAll('button'):";
+        v1.textContent = formatNodeList(openMatches);
+        row2.style.display = 'block';
+        k2.textContent = "closedHost.shadowRoot?.querySelectorAll('button'):";
+        v2.textContent = formatNodeList(closedMatches);
+        console.log("[2. host.shadowRoot?.querySelectorAll('button')]", {
+          openHost: openMatches ? Array.from(openMatches) : undefined,
+          closedHost: closedMatches,
+        });
+      } else if (action === 'doc-hosts') {
+        const matches = document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card');
+        matches.forEach(el => el.classList.add('matched-host'));
+        k1.textContent = "document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card'):";
+        v1.textContent = formatNodeList(matches);
+        row2.style.display = 'none';
+        console.log("[3. document.querySelectorAll('light-demo-card, open-demo-card, closed-demo-card')]", Array.from(matches));
+      }
+    }
+
+    document.querySelectorAll('.q-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.q-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        runAction(pill.dataset.action);
+      });
+    });
+  </script>
+</body>
+</html>

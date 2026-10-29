@@ -11,7 +11,7 @@
       background: #f8fafc;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 40px 20px; }
+    body { margin: 0; padding: 20px 16px; }
     .shell {
       max-width: 720px;
       margin: 0 auto;
@@ -75,8 +75,8 @@
     </div>
 
     <div class="controls">
-      <open-demo-card id="open-host"></open-demo-card>
-      <closed-demo-card id="closed-host"></closed-demo-card>
+      <open-demo-card></open-demo-card>
+      <closed-demo-card></closed-demo-card>
     </div>
 
     <div class="output">
@@ -196,14 +196,14 @@
     customElements.define('open-demo-card', class extends HTMLElement {
       connectedCallback() {
         const sr = this.attachShadow({ mode: 'open' });
-        buildShadowWidget(sr, '<open-demo-card#open-host> (open)', '#2563eb');
+        buildShadowWidget(sr, '<open-demo-card> (open)', '#2563eb');
       }
     });
 
     customElements.define('closed-demo-card', class extends HTMLElement {
       connectedCallback() {
         const sr = this.attachShadow({ mode: 'closed' });
-        buildShadowWidget(sr, '<closed-demo-card#closed-host> (closed)', '#0f766e');
+        buildShadowWidget(sr, '<closed-demo-card> (closed)', '#0f766e');
       }
     });
 

@@ -11,7 +11,7 @@
       background: #f8fafc;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 40px 20px; }
+    body { margin: 0; padding: 20px 16px; }
     .shell {
       max-width: 720px;
       margin: 0 auto;
@@ -67,14 +67,15 @@
     </div>
 
     <div class="controls">
-      <open-load-card id="open-host"></open-load-card>
-      <closed-load-card id="closed-host"></closed-load-card>
+      <open-load-card></open-load-card>
+      <closed-load-card></closed-load-card>
     </div>
 
     <div class="output">
       <div><span class="key">document.readyState:</span> <span class="val" id="v-state">—</span></div>
       <div><span class="key">DOMContentLoaded:</span> <span class="val" id="v-dcl">—</span></div>
       <div><span class="key">window.onload:</span> <span class="val" id="v-load">waiting for shadow &lt;img&gt;s…</span></div>
+      <div><span class="key">document.elementFromPoint(x, y):</span> <span class="val" id="v-hit">—</span></div>
     </div>
   </div>
 
@@ -82,17 +83,28 @@
     const vState = document.getElementById('v-state');
     const vDcl = document.getElementById('v-dcl');
     const vLoad = document.getElementById('v-load');
+    const vHit = document.getElementById('v-hit');
 
     vState.textContent = JSON.stringify(document.readyState);
+
+    function updateHitTest(targetEl) {
+      if (!targetEl) return;
+      const r = targetEl.getBoundingClientRect();
+      const x = Math.round(r.left + r.width / 2);
+      const y = Math.round(r.top + r.height / 2);
+      const hit = document.elementFromPoint(x, y);
+      vHit.textContent = hit ? `<${hit.tagName.toLowerCase()}> (at ${x}, ${y})` : 'null';
+    }
 
     function makeProgressSvg(label, pct, color, done) {
       const bg = done ? color : '#334155';
       const barW = Math.max(4, Math.round((pct / 100) * 260));
+      const safeLabel = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="280" height="54">
         <rect width="100%" height="100%" rx="6" fill="#0f172a"/>
-        <text x="12" y="22" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">${label}</text>
         <rect x="10" y="32" width="260" height="10" rx="5" fill="#334155"/>
         <rect x="10" y="32" width="${barW}" height="10" rx="5" fill="${bg}"/>
+        <text x="12" y="22" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="bold">${safeLabel}</text>
       </svg>`;
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
@@ -159,14 +171,14 @@
     customElements.define('open-load-card', class extends HTMLElement {
       connectedCallback() {
         const sr = this.attachShadow({ mode: 'open' });
-        buildSlowLoadWidget(sr, '<open-load-card#open-host> (open)', '#2563eb', 1200);
+        buildSlowLoadWidget(sr, '<open-load-card> (open)', '#2563eb', 1200);
       }
     });
 
     customElements.define('closed-load-card', class extends HTMLElement {
       connectedCallback() {
         const sr = this.attachShadow({ mode: 'closed' });
-        buildSlowLoadWidget(sr, '<closed-load-card#closed-host> (closed)', '#0f766e', 2400);
+        buildSlowLoadWidget(sr, '<closed-load-card> (closed)', '#0f766e', 2400);
       }
     });
 
@@ -174,7 +186,13 @@
       const t = `${Math.round(performance.now())}ms`;
       vState.textContent = JSON.stringify(document.readyState);
       vDcl.textContent = t;
+      updateHitTest(document.querySelector('closed-load-card'));
       console.log('[DOMContentLoaded]', t, e);
+    });
+
+    document.querySelectorAll('open-load-card, closed-load-card').forEach(card => {
+      card.addEventListener('pointerenter', () => updateHitTest(card));
+      card.addEventListener('click', () => updateHitTest(card));
     });
 
     window.addEventListener('load', (e) => {
